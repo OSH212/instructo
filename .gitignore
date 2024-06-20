@@ -1,0 +1,20 @@
+# Ignore everything
+*
+
+# But not:
+!.gitignore
+!.env
+!*.py
+!README.md
+!project-tree.md
+!requirements.txt
+
+# explicitly allow dirs to be searched for above exceptions
+!*/
+
+# Ignore __pycache__ directories and their contents
+__pycache__/
+**/__pycache__/*
+
+# Ignore .DS_Store 
+.DS_Store
