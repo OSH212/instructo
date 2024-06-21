@@ -1,69 +1,82 @@
 EVALUATION_CRITERIA = {
-    "Factual accuracy": {
-        "description": "Assess the correctness of presented information.",
+    "Content Quality": {
+        "description": "Assess the accuracy, depth, and relevance of the information presented.",
         "rubric": [
-            "1: Contains multiple factual errors",
-            "3: Mostly accurate with minor errors",
-            "5: Completely accurate and well-supported"
+            "1-2: Significant errors, shallow treatment, or off-topic",
+            "3-4: Some inaccuracies or lacks depth in key areas",
+            "5-6: Generally accurate and relevant but could be more comprehensive",
+            "7-8: Accurate, relevant, and fairly in-depth treatment",
+            "9-10: Exceptionally accurate, comprehensive, and insightful"
         ],
-        "prompt": "Verify key claims against reliable sources. Highlight any inaccuracies found."
+        "prompt": "Evaluate the accuracy, depth, and relevance of the content. Consider complexity of ideas, use of expert knowledge, and alignment with the given prompt/objective. Suggest areas for improvement or expansion."
     },
-    "Clarity of expression": {
-        "description": "Evaluate how well ideas are communicated.",
+    "Critical Analysis and Argumentation": {
+        "description": "Assess the level of critical thinking, insights, and quality of argumentation.",
         "rubric": [
-            "1: Confusing and difficult to follow",
-            "3: Generally clear with some complex passages",
-            "5: Crystal clear and easily understood"
+            "1-2: Superficial analysis with poor argumentation",
+            "3-4: Basic analysis with limited original thought or weak arguments",
+            "5-6: Some critical analysis and adequate argumentation, but could go deeper",
+            "7-8: Good critical analysis with well-constructed arguments",
+            "9-10: Exceptional critical thinking with compelling argumentation"
         ],
-        "prompt": "Identify any unclear passages. Suggest rephrasing for improved clarity."
+        "prompt": "Evaluate the depth of analysis, presence of original insights, and strength of arguments. Assess the use of evidence/sources. Identify areas where the analysis could be deepened or argumentation improved."
     },
-    "Relevance to the prompt": {
-        "description": "Determine how well the content addresses the given prompt.",
+    "Structure and Clarity": {
+        "description": "Evaluate how well ideas are organized and communicated.",
         "rubric": [
-            "1: Mostly off-topic or tangential",
-            "3: Addresses main points with some digressions",
-            "5: Directly and comprehensively addresses the prompt"
+            "1-2: Confusing and poorly structured",
+            "3-4: Some clear points but overall difficult to follow",
+            "5-6: Generally clear but with some organizational issues",
+            "7-8: Clear and well-structured with minor issues",
+            "9-10: Exceptionally clear, coherent, and well-organized"
         ],
-        "prompt": "Compare content to the original prompt. Note any irrelevant sections."
+        "prompt": "Assess the clarity of expression and logical flow of ideas. Identify any unclear passages or structural issues. Suggest improvements for clarity and coherence."
     },
-    "Depth of analysis": {
-        "description": "Assess the level of critical thinking and insight.",
+    "Language and Style": {
+        "description": "Evaluate the quality of writing, including grammar, vocabulary, and stylistic choices.",
         "rubric": [
-            "1: Surface-level treatment of the topic",
-            "3: Some in-depth analysis with room for improvement",
-            "5: Thorough, nuanced exploration of the subject"
+            "1-2: Poor grammar and inappropriate style",
+            "3-4: Frequent language errors or inconsistent style",
+            "5-6: Generally correct language with an appropriate style",
+            "7-8: Well-written with good command of language and style",
+            "9-10: Exceptional writing with masterful use of language and style"
         ],
-        "prompt": "Identify areas where the analysis could be deepened. Suggest additional perspectives or angles."
+        "prompt": "Assess the quality of writing, including grammar, vocabulary, and style. Consider the appropriateness for the intended audience and purpose. Suggest improvements in language use and style."
     },
-    "Coherence and structure": {
-        "description": "Evaluate the logical flow and organization of ideas.",
+    "Perspective and Objectivity": {
+        "description": "Evaluate the appropriateness of the perspective taken and the level of objectivity (when required).",
         "rubric": [
-            "1: Disjointed and poorly organized",
-            "3: Generally logical flow with minor inconsistencies",
-            "5: Well-structured with clear progression of ideas"
+            "1-2: Heavily biased or inappropriate perspective",
+            "3-4: Noticeable bias or misaligned perspective",
+            "5-6: Generally appropriate perspective with some bias",
+            "7-8: Well-balanced perspective, mostly objective when required",
+            "9-10: Perfectly aligned perspective, objective when required"
         ],
-        "prompt": "Outline the main structure. Propose improvements for smoother transitions between ideas."
+        "prompt": "Assess whether the perspective taken is appropriate for the given prompt/objective. If objectivity is required, evaluate its presence. If a specific viewpoint is needed, assess how well it's presented. Suggest ways to improve the balance or perspective as needed."
     },
-    "Use of supporting evidence": {
-        "description": "Assess the quality and relevance of evidence used.",
+    "Relevance to Initial Objective": {
+        "description": "Assess how well the content addresses the initial user-given objective.",
         "rubric": [
-            "1: Lack of supporting evidence",
-            "3: Some relevant evidence, but could be stronger",
-            "5: Strong, varied, and well-integrated evidence"
+            "1-2: Content largely ignores or misses the initial objective",
+            "3-4: Content partially addresses the initial objective with significant gaps",
+            "5-6: Content addresses the initial objective but lacks depth or comprehensiveness",
+            "7-8: Content fully addresses the initial objective with good relevance",
+            "9-10: Content exceptionally addresses and expands upon the initial objective"
         ],
-        "prompt": "List the main pieces of evidence used. Suggest additional or more robust evidence where needed."
+        "prompt": "Compare the content to the initial user-given objective. Evaluate how well it addresses and fulfills this objective."
     },
-    "Objectivity and lack of bias": {
-        "description": "Evaluate the balance and fairness of the content.",
+    "Creativity and Originality": {
+        "description": "Assess the level of creativity and originality in the content.",
         "rubric": [
-            "1: Heavily biased or one-sided",
-            "3: Generally balanced with some subjective elements",
-            "5: Objective and presents multiple perspectives fairly"
+            "1-2: Entirely derivative or lacking creativity",
+            "3-4: Mostly conventional with little originality",
+            "5-6: Some creative elements but largely conventional",
+            "7-8: Good level of creativity and originality",
+            "9-10: Exceptionally creative and original"
         ],
-        "prompt": "Identify any biased language or one-sided arguments. Propose ways to present a more balanced view."
+        "prompt": "Evaluate the creativity and originality of the content. Consider unique approaches, novel ideas, or innovative presentations. Suggest areas where more creative approaches could be applied."
     }
 }
-
 
 
 def get_evaluation_prompt(content):

@@ -28,11 +28,13 @@ class Memory:
         try:
             with open(filename, 'r') as f:
                 loaded_data = yaml.safe_load(f)
-                self.interactions = deque(loaded_data, maxlen=self.interactions.maxlen)
-                # Convert dictionaries back to UserEvaluation objects
-                for interaction in self.interactions:
-                    user_eval = interaction['user_evaluation']
-                    interaction['user_evaluation'] = UserEvaluation(user_eval['score'], user_eval['feedback'])
+                if loaded_data:
+                    self.interactions = deque(
+                        [{**interaction, 
+                          'user_evaluation': UserEvaluation(**interaction['user_evaluation'])}
+                         for interaction in loaded_data],
+                        maxlen=self.interactions.maxlen
+                    )
         except FileNotFoundError:
             print("No existing memory file found. Starting with empty memory.")
         except yaml.YAMLError as e:

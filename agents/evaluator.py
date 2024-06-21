@@ -11,37 +11,54 @@ class Evaluator:
             "Your task is to critically assess the given content based on the provided criteria. "
             "Provide a thorough evaluation, highlighting strengths and areas for improvement. "
             "Be objective, constructive, and specific in your feedback. "
-            "Use the rubrics and prompts provided for each criterion to guide your evaluation."
+            "Use the rubrics and prompts provided for each criterion to guide your evaluation. "
+            "Always provide an overall assessment and recommendations for improvement, even if they are minor. "
+            "If the content is truly exceptional, state that clearly in your overall assessment."
         )
 
     def evaluate_content(self, content):
-        recent_interactions = memory.get_recent_interactions()
-        context = self._generate_context(recent_interactions)
-        
         evaluation_prompt = get_evaluation_prompt(content)
         
         messages = [
-            {"role": "system", "content": self.system_message + context},
+            {"role": "system", "content": self.system_message},
             {"role": "user", "content": evaluation_prompt}
         ]
         response = api.get_completion(self.model, messages)
         if response and 'choices' in response:
-            return response['choices'][0]['message']['content']
+            full_evaluation = response['choices'][0]['message']['content']
+            parsed_evaluation = self._parse_evaluation(full_evaluation)
+            if not parsed_evaluation['overall_assessment'] and not parsed_evaluation['recommendations']:
+                return full_evaluation  # Return full text if parsing fails
+            return parsed_evaluation
         else:
             return "I apologize, but I couldn't evaluate the content at this time. Please try again later."
 
-    def _generate_context(self, recent_interactions):
-        if not recent_interactions:
-            return ""
+    def _parse_evaluation(self, evaluation):
+        parsed = {
+            'overall_assessment': '',
+            'recommendations': [],
+            'no_improvements_needed': False,
+            'full_evaluation': evaluation
+        }
         
-        context = "\n\nRecent evaluation performance notes:"
-        for interaction in recent_interactions:
-            user_evaluation = interaction['user_evaluation']
-            if isinstance(user_evaluation, dict) and 'score' in user_evaluation:
-                if user_evaluation['score'] < 7:  # Focus on areas needing improvement
-                    context += f"\n- User feedback on your evaluation: {user_evaluation['feedback']}"
+        lines = evaluation.split('\n')
+        current_section = None
+        for line in lines:
+            line = line.strip()
+            if line.lower().startswith("overall assessment:"):
+                current_section = 'overall_assessment'
+                parsed['overall_assessment'] = line.split(":", 1)[1].strip()
+            elif line.lower().startswith("key recommendations for improvement:"):
+                current_section = 'recommendations'
+            elif current_section == 'recommendations' and line.startswith("-"):
+                parsed['recommendations'].append(line[1:].strip())
+            elif current_section == 'overall_assessment':
+                parsed['overall_assessment'] += " " + line
         
-        return context
+        if "no improvements needed" in parsed['overall_assessment'].lower() or not parsed['recommendations']:
+            parsed['no_improvements_needed'] = True
+
+        return parsed
 
     def learn(self, feedback):
         self.system_message += f"\n\nImprovement note: {feedback}"
