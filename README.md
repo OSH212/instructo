@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project demonstrates an AI-powered content creation and evaluation system, designed to showcase skills relevant to the LLM Teacher position at Perplexity AI. It utilizes Perplexity's API to generate content and evaluate it, incorporating a feedback loop for continuous improvement.
+This project demonstrates an AI-powered content creation and evaluation system. It utilizes Perplexity's API to generate content and evaluate it, incorporating a feedback loop for continuous improvement.
 
 ## Features
 

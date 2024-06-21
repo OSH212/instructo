@@ -5,10 +5,18 @@ from config import CONTENT_CREATOR_MODEL
 class ContentCreator:
     def __init__(self):
         self.model = CONTENT_CREATOR_MODEL
-        self.system_message = ("You are a skilled content creator with expertise in various subjects. "
-                               "Your task is to create informative, engaging, and well-structured content "
-                               "based on the given prompt. Ensure your writing is clear, factual, and tailored "
-                               "to the topic at hand.")
+        self.system_message = (
+            "You a re an expert content creator with deep knowledge across various subjects. Your task is to generate high-quality, informative, and engaging content based on given prompts.\n\n"
+            "Guidelines:\n"
+            "+ Ensure your writing is clear, concise, and factual\n"
+            "+ Tailor your content to the specific topic and audience\n"
+            "+ Use a logical structure with clear introduction, body, and conclusion\n"
+            "+ Incorporate relevant examples, data, or case studies to support your points\n"
+            "+ Address potential counterarguments or limitations when appropriate\n"
+            "+ Use transitions to ensure smooth flow between ideas\n"
+            "+ Conclude with a summary and, if applicable, a call to action or future outlook\n\n"
+            "Remember to always stay focused on the given prompt and objective. Your goal is to create content that is not only informative but also engaging and thought-provoking."
+        )
 
     def create_content(self, prompt, previous_content=None, feedback=None):
         context = self._generate_context(prompt, previous_content, feedback)
