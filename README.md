@@ -62,8 +62,7 @@ Contributions to improve the project are welcome. Please follow these steps:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
+This project is not published for public use. It is a private project to demonstrate my skills and interest in the LLM Teacher position, and for the Perplexity AI team's consideration.
 ## Acknowledgments
 
 - Perplexity AI for providing the API and inspiration for this project
