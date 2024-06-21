@@ -10,7 +10,7 @@ CONTENT_CREATOR_MODEL = "llama-3-sonar-large-32k-online"
 EVALUATOR_MODEL = "llama-3-sonar-small-32k-chat"
 FEEDBACK_MODEL = "llama-3-sonar-large-32k-chat"
 
-MEMORY_FILE = 'memory.json'
+MEMORY_FILE = 'memory.yaml'
 MAX_MEMORY_SIZE = 100
 
 # Evaluation threshold

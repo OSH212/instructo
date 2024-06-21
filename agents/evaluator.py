@@ -25,7 +25,10 @@ class Evaluator:
             {"role": "user", "content": evaluation_prompt}
         ]
         response = api.get_completion(self.model, messages)
-        return response['choices'][0]['message']['content']
+        if response and 'choices' in response:
+            return response['choices'][0]['message']['content']
+        else:
+            return "I apologize, but I couldn't evaluate the content at this time. Please try again later."
 
     def _generate_context(self, recent_interactions):
         if not recent_interactions:
@@ -33,8 +36,10 @@ class Evaluator:
         
         context = "\n\nRecent evaluation performance notes:"
         for interaction in recent_interactions:
-            if interaction['user_evaluation'].score < 7:  # Focus on areas needing improvement
-                context += f"\n- User feedback on your evaluation: {interaction['user_evaluation'].feedback}"
+            user_evaluation = interaction['user_evaluation']
+            if isinstance(user_evaluation, dict) and 'score' in user_evaluation:
+                if user_evaluation['score'] < 7:  # Focus on areas needing improvement
+                    context += f"\n- User feedback on your evaluation: {user_evaluation['feedback']}"
         
         return context
 

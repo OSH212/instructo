@@ -1,5 +1,5 @@
-from config import API_KEY, API_URL
 import requests
+from config import API_KEY, API_URL
 
 class PerplexityAPI:
     def __init__(self):
@@ -16,7 +16,14 @@ class PerplexityAPI:
             "messages": messages,
             "temperature": temperature
         }
-        response = requests.post(self.url, json=payload, headers=self.headers)
-        return response.json()
+        try:
+            response = requests.post(self.url, json=payload, headers=self.headers)
+            response.raise_for_status()  # Raise an exception for bad status codes
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"API request failed: {e}")
+            if hasattr(e, 'response') and e.response is not None:
+                print(f"Response content: {e.response.text}")
+            return None
 
 api = PerplexityAPI()
