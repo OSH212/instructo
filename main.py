@@ -9,6 +9,10 @@ from colorama import Fore, Style, init
 from rich.console import Console
 from rich.panel import Panel
 from rich.columns import Columns
+from rich.prompt import Prompt
+from rich.table import Table
+from rich import box
+from utils.guidelines import EVALUATION_CRITERIA
 
 def apply_feedback(creator, evaluator, user_eval, content, evaluation):
     interpretation_prompt = f"""
@@ -124,23 +128,43 @@ def run_interaction(prompt, creator, evaluator):
         evaluation = evaluator.evaluate_content(content, prompt)
         parsed_eval = parse_evaluation(evaluation)
         display_evaluation(parsed_eval, console)
-        
-        
-        
 
         # User Evaluation
-        while True:
-            try:
-                user_score = float(input("\nRate the AI's evaluation (0-10): "))
-                if 0 <= user_score <= 10:
-                    break
-                else:
-                    print("Please enter a number between 0 and 10.")
-            except ValueError:
-                print("Invalid input. Please enter a number.")
+        user_scores = {}
+        user_feedbacks = {}
         
-        user_feedback = input("Provide feedback on the AI's evaluation: ")
-        user_eval = UserEvaluation(user_score, user_feedback)
+        console.print("\n[bold]Please rate and provide feedback for each criterion:[/bold]")
+        
+        table = Table(title="Evaluation Criteria", box=box.ROUNDED)
+        table.add_column("Criterion", style="cyan")
+        table.add_column("Score (0-10)", style="magenta")
+        table.add_column("Feedback", style="green")
+
+        for criterion in EVALUATION_CRITERIA.keys():
+            while True:
+                score = Prompt.ask(f"Rate the [cyan]{criterion}[/cyan] (0-10)", default="5")
+                try:
+                    score = float(score)
+                    if 0 <= score <= 10:
+                        break
+                    else:
+                        console.print("[red]Please enter a number between 0 and 10.[/red]")
+                except ValueError:
+                    console.print("[red]Invalid input. Please enter a number.[/red]")
+            
+            feedback = Prompt.ask(f"Provide feedback for [cyan]{criterion}[/cyan]")
+            
+            user_scores[criterion] = score
+            user_feedbacks[criterion] = feedback
+            
+            table.add_row(criterion, str(score), feedback)
+
+        console.print(table)
+
+        overall_score = sum(user_scores.values()) / len(user_scores)
+        overall_feedback = "\n".join([f"{k}: {v}" for k, v in user_feedbacks.items()])
+        
+        user_eval = UserEvaluation(overall_score, overall_feedback)
 
         # Store interaction in memory
         memory.add_interaction(prompt, content, evaluation, user_eval)
@@ -149,19 +173,14 @@ def run_interaction(prompt, creator, evaluator):
         creator_feedback, evaluator_feedback = apply_feedback(creator, evaluator, user_eval, {'prompt': prompt, 'content': content}, evaluation)
 
         if creator_feedback is None and evaluator_feedback is None:
-            print("\nNo improvements are needed. The content and evaluation are exceptional.")
+            console.print("\n[green]No improvements are needed. The content and evaluation are exceptional.[/green]")
             while True:
-                user_choice = input("Do you want to start a new prompt or quit? Enter 'new' or 'quit': ").lower()
+                user_choice = Prompt.ask("Do you want to start a new prompt or quit?", choices=["new", "quit"], default="new")
                 if user_choice in ['new', 'quit']:
                     return user_choice == 'new'
-                else:
-                    print("Invalid choice. Please enter 'new' or 'quit'.")
         elif creator_feedback and evaluator_feedback:
-            print("\nBased on the feedback, the content creator and evaluator will now improve their outputs.")
-            print("\nDo you want to continue with the improved version, start a new prompt, or quit?")
-            print("Enter 'continue' to see the improved version, 'new' for a new prompt, or 'quit' to exit.")
-            
-            user_choice = input().lower()
+            console.print("\n[yellow]Based on the feedback, the content creator and evaluator will now improve their outputs.[/yellow]")
+            user_choice = Prompt.ask("Do you want to continue with the improved version, start a new prompt, or quit?", choices=["continue", "new", "quit"], default="continue")
             if user_choice == 'continue':
                 previous_content = content
                 continue
@@ -169,22 +188,15 @@ def run_interaction(prompt, creator, evaluator):
                 return True
             elif user_choice == 'quit':
                 return False
-            else:
-                print("Invalid choice. Continuing with the improved version.")
-                previous_content = content
         else:
-            print("\nUnable to apply feedback. Do you want to try again with the same prompt, start a new one, or quit?")
-            print("Enter 'restart' to try again, 'new' for a new prompt, or 'quit' to exit.")
-            
-            user_choice = input().lower()
+            console.print("\n[red]Unable to apply feedback.[/red]")
+            user_choice = Prompt.ask("Do you want to try again with the same prompt, start a new one, or quit?", choices=["restart", "new", "quit"], default="restart")
             if user_choice == 'restart':
                 continue
             elif user_choice == 'new':
                 return True
             elif user_choice == 'quit':
                 return False
-            else:
-                print("Invalid choice. Restarting with the same prompt.")
         
 
 def main():
