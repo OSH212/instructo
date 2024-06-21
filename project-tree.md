@@ -16,5 +16,5 @@ perplexity_llm_teacher/
 ├── config.py
 ├── requirements.txt
 ├── .env
-├── memory.json
+├── memory.yaml
 └── README.md

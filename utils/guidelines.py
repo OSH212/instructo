@@ -6,7 +6,8 @@ EVALUATION_CRITERIA = {
             "3-4: Some inaccuracies or lacks depth in key areas",
             "5-6: Generally accurate and relevant but could be more comprehensive",
             "7-8: Accurate, relevant, and fairly in-depth treatment",
-            "9-10: Exceptionally accurate, comprehensive, and insightful"
+            "9: Highly accurate, comprehensive, and insightful with minor room for improvement",
+            "10: Perfect content quality, nothing more needed"
         ],
         "prompt": "Evaluate the accuracy, depth, and relevance of the content. Consider complexity of ideas, use of expert knowledge, and alignment with the given prompt/objective. Suggest areas for improvement or expansion."
     },
@@ -17,7 +18,8 @@ EVALUATION_CRITERIA = {
             "3-4: Basic analysis with limited original thought or weak arguments",
             "5-6: Some critical analysis and adequate argumentation, but could go deeper",
             "7-8: Good critical analysis with well-constructed arguments",
-            "9-10: Exceptional critical thinking with compelling argumentation"
+            "9: Exceptional critical thinking with compelling argumentation, minor improvements possible",
+            "10: Perfect critical analysis and argumentation, nothing more needed"
         ],
         "prompt": "Evaluate the depth of analysis, presence of original insights, and strength of arguments. Assess the use of evidence/sources. Identify areas where the analysis could be deepened or argumentation improved."
     },
@@ -28,7 +30,8 @@ EVALUATION_CRITERIA = {
             "3-4: Some clear points but overall difficult to follow",
             "5-6: Generally clear but with some organizational issues",
             "7-8: Clear and well-structured with minor issues",
-            "9-10: Exceptionally clear, coherent, and well-organized"
+            "9: Exceptionally clear, coherent, and well-organized with minimal room for improvement",
+            "10: Perfect structure and clarity, nothing more needed"
         ],
         "prompt": "Assess the clarity of expression and logical flow of ideas. Identify any unclear passages or structural issues. Suggest improvements for clarity and coherence."
     },
@@ -39,7 +42,8 @@ EVALUATION_CRITERIA = {
             "3-4: Frequent language errors or inconsistent style",
             "5-6: Generally correct language with an appropriate style",
             "7-8: Well-written with good command of language and style",
-            "9-10: Exceptional writing with masterful use of language and style"
+            "9: Exceptional writing with near-perfect use of language and style",
+            "10: Perfect language and style, nothing more needed"
         ],
         "prompt": "Assess the quality of writing, including grammar, vocabulary, and style. Consider the appropriateness for the intended audience and purpose. Suggest improvements in language use and style."
     },
@@ -50,20 +54,22 @@ EVALUATION_CRITERIA = {
             "3-4: Noticeable bias or misaligned perspective",
             "5-6: Generally appropriate perspective with some bias",
             "7-8: Well-balanced perspective, mostly objective when required",
-            "9-10: Perfectly aligned perspective, objective when required"
+            "9: Near-perfect alignment of perspective, objective when required with minimal room for improvement",
+            "10: Perfect perspective and objectivity, nothing more needed"
         ],
         "prompt": "Assess whether the perspective taken is appropriate for the given prompt/objective. If objectivity is required, evaluate its presence. If a specific viewpoint is needed, assess how well it's presented. Suggest ways to improve the balance or perspective as needed."
     },
-    "Relevance to Initial Objective": {
-        "description": "Assess how well the content addresses the initial user-given objective.",
+    "Relevance to Initial Objective and Accuracy": {
+        "description": "Assess how well the content addresses the initial user-given objective and the accuracy of facts presented.",
         "rubric": [
-            "1-2: Content largely ignores or misses the initial objective",
-            "3-4: Content partially addresses the initial objective with significant gaps",
-            "5-6: Content addresses the initial objective but lacks depth or comprehensiveness",
-            "7-8: Content fully addresses the initial objective with good relevance",
-            "9-10: Content exceptionally addresses and expands upon the initial objective"
+            "1-2: Content largely ignores or misses the initial objective; contains significant factual errors",
+            "3-4: Content partially addresses the initial objective with significant gaps; contains some inaccuracies",
+            "5-6: Content addresses the initial objective but lacks depth or comprehensiveness; mostly accurate with some minor errors",
+            "7-8: Content fully addresses the initial objective with good relevance; facts are generally accurate",
+            "9: Content exceptionally addresses and expands upon the initial objective with high accuracy; minimal room for improvement",
+            "10: Perfect relevance to initial objective and factual accuracy, nothing more needed"
         ],
-        "prompt": "Compare the content to the initial user-given objective. Evaluate how well it addresses and fulfills this objective."
+        "prompt": "Compare the content to the initial user-given objective. Evaluate how well it addresses and fulfills this objective. Also assess the accuracy of the facts presented in the content."
     },
     "Creativity and Originality": {
         "description": "Assess the level of creativity and originality in the content.",
@@ -72,7 +78,8 @@ EVALUATION_CRITERIA = {
             "3-4: Mostly conventional with little originality",
             "5-6: Some creative elements but largely conventional",
             "7-8: Good level of creativity and originality",
-            "9-10: Exceptionally creative and original"
+            "9: Exceptionally creative and original with minimal room for improvement",
+            "10: Perfect creativity and originality, nothing more needed"
         ],
         "prompt": "Evaluate the creativity and originality of the content. Consider unique approaches, novel ideas, or innovative presentations. Suggest areas where more creative approaches could be applied."
     }
