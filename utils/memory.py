@@ -1,3 +1,4 @@
+import os 
 import yaml
 from collections import deque
 from models.evaluation import UserEvaluation
@@ -31,13 +32,18 @@ class Memory:
                 if loaded_data:
                     self.interactions = deque(
                         [{**interaction, 
-                          'user_evaluation': UserEvaluation(**interaction['user_evaluation'])}
-                         for interaction in loaded_data],
+                        'user_evaluation': UserEvaluation(
+                            score=interaction['user_evaluation']['score'],
+                            feedback=interaction['user_evaluation']['feedback']
+                        )}
+                        for interaction in loaded_data],
                         maxlen=self.interactions.maxlen
                     )
         except FileNotFoundError:
             print("No existing memory file found. Starting with empty memory.")
         except yaml.YAMLError as e:
             print(f"Error loading memory file: {e}")
+        except Exception as e:
+            print(f"Unexpected error loading memory file: {e}")
 
 memory = Memory()

@@ -16,8 +16,8 @@ class Evaluator:
             "If the content is truly exceptional, state that clearly in your overall assessment."
         )
 
-    def evaluate_content(self, content):
-        evaluation_prompt = get_evaluation_prompt(content)
+    def evaluate_content(self, content, objective):
+        evaluation_prompt = get_evaluation_prompt(content, objective)
         
         messages = [
             {"role": "system", "content": self.system_message},

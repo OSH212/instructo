@@ -79,26 +79,17 @@ EVALUATION_CRITERIA = {
 }
 
 
-def get_evaluation_prompt(content):
-    """
-    Generates a detailed evaluation prompt based on predefined criteria for assessing content.
-
-    Args:
-    content (str): The content to be evaluated.
-
-    Returns:
-    str: A formatted string containing the evaluation prompt.
-    """
+def get_evaluation_prompt(content, objective):
     prompt = "Evaluate the following content based on these criteria:\n\n"
     for criterion, details in EVALUATION_CRITERIA.items():
         prompt += f"{criterion}:\n"
         prompt += f"Description: {details['description']}\n"
         prompt += "Rubric:\n" + "\n".join(details['rubric']) + "\n"
-        prompt += f"Evaluation task: {details['prompt']}\n\n"
+        prompt += f"Evaluation task: {details['prompt'].format(objective=objective)}\n\n"
     
     prompt += f"Content to evaluate:\n\n{content}\n\n"
     prompt += "For each criterion, provide:\n"
-    prompt += "1. A score (1-5) based on the rubric\n"
+    prompt += "1. A score (1-10) based on the rubric\n"
     prompt += "2. A brief explanation for the score\n"
     prompt += "3. Specific suggestions for improvement\n"
     prompt += "\nFinally, provide an overall assessment and key recommendations for improvement."

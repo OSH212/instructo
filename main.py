@@ -103,7 +103,7 @@ def run_interaction(prompt, creator, evaluator):
         print("\nGenerated Content:\n", content)
 
         # AI Evaluation
-        evaluation = evaluator.evaluate_content(content)
+        evaluation = evaluator.evaluate_content(content, prompt)
         print("\nAI Evaluation:")
         print(evaluation)
 
