@@ -5,6 +5,10 @@ from utils.memory import memory
 from utils.api_handler import api
 from config import FEEDBACK_MODEL
 import traceback
+from colorama import Fore, Style, init
+from rich.console import Console
+from rich.panel import Panel
+from rich.columns import Columns
 
 def apply_feedback(creator, evaluator, user_eval, content, evaluation):
     interpretation_prompt = f"""
@@ -93,19 +97,36 @@ def handle_command(command, prompt, creator, evaluator):
         print("Invalid command. Please try again.")
     return True
 
+def parse_evaluation(evaluation):
+    if isinstance(evaluation, str):
+        return {'full_evaluation': evaluation}
+    return evaluation
+
+def display_evaluation(evaluation, console):
+    if 'full_evaluation' in evaluation:
+        console.print(Panel(evaluation['full_evaluation'], title="AI Evaluation", expand=False), style="yellow")
+    else:
+        overall = Panel(evaluation['overall_assessment'], title="Overall Assessment", expand=False)
+        recommendations = Panel("\n".join([f"- {r}" for r in evaluation['recommendations']]), title="Recommendations", expand=False)
+        console.print(Columns([overall, recommendations]), style="yellow")
+
 def run_interaction(prompt, creator, evaluator):
     previous_content = None
     creator_feedback = None
+    console = Console()
     
     while True:
         # Content creation
         content = creator.create_content(prompt, previous_content, creator_feedback)
-        print("\nGenerated Content:\n", content)
+        console.print(Panel(content, title="Generated Content", expand=False), style="cyan")
 
         # AI Evaluation
         evaluation = evaluator.evaluate_content(content, prompt)
-        print("\nAI Evaluation:")
-        print(evaluation)
+        parsed_eval = parse_evaluation(evaluation)
+        display_evaluation(parsed_eval, console)
+        
+        
+        
 
         # User Evaluation
         while True:
