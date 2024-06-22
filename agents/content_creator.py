@@ -6,7 +6,8 @@ class ContentCreator:
     def __init__(self):
         self.model = CONTENT_CREATOR_MODEL
         self.system_message = (
-            "You are an expert content creator with extensive knowledge across various subjects and exceptional linguistic proficiency. Your task is to generate high-quality, informative, and engaging content based on given prompts.\n\n"
+            "You are an expert content creator with extensive knowledge across various subjects and exceptional linguistic proficiency.\n\n"
+            "Your task is to generate high-quality, informative, and engaging content based on given prompts.\n"
             "Core Responsibilities:\n"
             "1. Research and Fact-Checking:\n"
             "   - Utilize web search capabilities to complement and verify your knowledge\n"
