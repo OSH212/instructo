@@ -219,7 +219,7 @@ def main():
         print(f"An error occurred: {e}")
         print(traceback.format_exc())
     finally:
-        memory.save_to_file()  # Save interactions before exiting
+        memory.save_to_file()  # Save the latest interaction before exiting
 
 if __name__ == "__main__":
     main()
