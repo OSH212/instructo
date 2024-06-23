@@ -50,14 +50,14 @@ def apply_feedback(creator, evaluator, creator_feedback, evaluator_feedback):
         evaluator.learn(evaluator_feedback)
 
 
-def handle_command(command, prompt, creator, evaluator):
+def handle_command(command, prompt, creator, evaluator, feedback_agent):
     if command == 'quit':
         return False
     elif command == 'new':
         return True
     elif command == 'restart':
         print("\nRestarting interaction with the same prompt.")
-        run_interaction(prompt, creator, evaluator)
+        run_interaction(prompt, creator, evaluator, feedback_agent)
     else:
         print("Invalid command. Please try again.")
     return True
@@ -113,6 +113,9 @@ def run_interaction(prompt, creator, evaluator, feedback_agent):
                 return True
             elif decision == "quit":
                 return False
+        
+        if decision == "quit":
+            break
 
     return True
 
@@ -122,38 +125,24 @@ def display_feedback(feedback, console):
     
     if 'overall_analysis' in feedback:
         console.print(Panel(feedback['overall_analysis'], title="Overall Analysis", expand=False))
-    else:
-        console.print("[yellow]No overall analysis provided.[/yellow]")
 
-    console.print("\n[bold cyan]Feedback for Content Agent:[/bold cyan]")
+    console.print("\n[bold cyan]Feedback for Content Creator:[/bold cyan]")
     if 'content_feedback' in feedback:
         for criterion, suggestions in feedback['content_feedback'].items():
             console.print(f"\n[underline]{criterion}:[/underline]")
-            if suggestions:
-                for suggestion in suggestions:
-                    console.print(f"- {suggestion}")
-            else:
-                console.print("- No specific improvements suggested.")
-    else:
-        console.print("[yellow]No content feedback provided.[/yellow]")
-
-    console.print("\n[bold yellow]Feedback for Evaluator Agent:[/bold yellow]")
+            for suggestion in suggestions:
+                console.print(f"- {suggestion}")
+    
+    console.print("\n[bold yellow]Feedback for Evaluator:[/bold yellow]")
     if 'evaluator_feedback' in feedback:
         for criterion, suggestions in feedback['evaluator_feedback'].items():
             console.print(f"\n[underline]{criterion}:[/underline]")
-            if suggestions:
-                for suggestion in suggestions:
-                    console.print(f"- {suggestion}")
-            else:
-                console.print("- No specific improvements suggested.")
-    else:
-        console.print("[yellow]No evaluator feedback provided.[/yellow]")
+            for suggestion in suggestions:
+                console.print(f"- {suggestion}")
 
     if 'conclusion' in feedback:
         console.print("\n[bold green]Conclusion:[/bold green]")
         console.print(Panel(feedback['conclusion'], expand=False))
-    else:
-        console.print("\n[yellow]No conclusion provided.[/yellow]")
 
     console.print(f"\n[bold]Improvements needed:[/bold] {'Yes' if feedback.get('improvements_needed', False) else 'No'}")
 
@@ -249,6 +238,237 @@ if __name__ == "__main__":
 
 
 # ========================
+# File: config.py
+# ========================
+
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+API_KEY = os.getenv('PERPLEXITY_API_KEY')
+API_URL = os.getenv('PERPLEXITY_API_URL', 'https://api.perplexity.ai/chat/completions')
+
+CONTENT_CREATOR_MODEL = "llama-3-sonar-large-32k-online"
+EVALUATOR_MODEL = "llama-3-sonar-large-32k-online"
+FEEDBACK_MODEL = "llama-3-sonar-large-32k-chat"
+
+MEMORY_FILE = 'memory.yaml'
+MAX_MEMORY_SIZE = 100
+
+# Evaluation threshold
+LOW_SCORE_THRESHOLD = 7
+
+# ========================
+# File: main.py
+# ========================
+
+from agents.content_creator import ContentCreator
+from agents.evaluator import Evaluator
+from models.evaluation import UserEvaluation
+from utils.memory import memory
+from utils.api_handler import api
+from config import FEEDBACK_MODEL
+import traceback
+from colorama import Fore, Style, init
+from rich.console import Console
+from rich.panel import Panel
+from rich.columns import Columns
+from rich.prompt import Prompt
+from rich.table import Table
+from rich import box
+from utils.guidelines import EVALUATION_CRITERIA
+from agents.feedback_agent import FeedbackAgent
+
+def apply_feedback(creator, evaluator, creator_feedback, evaluator_feedback):
+    if creator_feedback:
+        creator.learn(creator_feedback)
+    if evaluator_feedback:
+        evaluator.learn(evaluator_feedback)
+
+
+def handle_command(command, prompt, creator, evaluator, feedback_agent):
+    if command == 'quit':
+        return False
+    elif command == 'new':
+        return True
+    elif command == 'restart':
+        print("\nRestarting interaction with the same prompt.")
+        run_interaction(prompt, creator, evaluator, feedback_agent)
+    else:
+        print("Invalid command. Please try again.")
+    return True
+
+def parse_evaluation(evaluation):
+    if isinstance(evaluation, str):
+        return {'full_evaluation': evaluation}
+    return evaluation
+
+
+def run_interaction(prompt, creator, evaluator, feedback_agent):
+    console = Console()
+    
+    while True:
+        # Content creation
+        content = creator.create_content(prompt)
+        console.print(Panel(content, title="Generated Content", expand=False), style="cyan")
+
+        # AI Evaluation
+        evaluation = evaluator.evaluate_content(content, prompt)
+        display_evaluation(evaluation, console)
+
+        # User Evaluation
+        user_eval = get_user_evaluation(console)
+
+        # Store interaction in memory
+        memory.add_interaction(prompt, content, evaluation, user_eval)
+
+        # Feedback Agent Analysis
+        feedback = feedback_agent.analyze_interaction({'prompt': prompt, 'content': content}, evaluation, user_eval)
+        display_feedback(feedback, console)
+
+        while True:
+            decision = Prompt.ask(
+                "What would you like to do?",
+                choices=["continue", "disagree", "new", "quit"],
+                default="continue"
+            )
+
+            if decision == "continue":
+                if feedback['improvements_needed']:
+                    creator.learn(feedback['content_feedback'])
+                    evaluator.learn(feedback['evaluator_feedback'])
+                    break
+                else:
+                    console.print("No further improvements needed. Starting a new interaction.")
+                    return True
+            elif decision == "disagree":
+                additional_feedback = get_additional_feedback(console)
+                feedback = feedback_agent.incorporate_user_feedback(feedback, additional_feedback)
+                display_feedback(feedback, console)
+            elif decision == "new":
+                return True
+            elif decision == "quit":
+                return False
+        
+        if decision == "quit":
+            break
+
+    return True
+
+
+def display_feedback(feedback, console):
+    console.print("\n[bold magenta]Feedback Agent Analysis:[/bold magenta]")
+    
+    if 'overall_analysis' in feedback:
+        console.print(Panel(feedback['overall_analysis'], title="Overall Analysis", expand=False))
+
+    console.print("\n[bold cyan]Feedback for Content Creator:[/bold cyan]")
+    if 'content_feedback' in feedback:
+        for criterion, suggestions in feedback['content_feedback'].items():
+            console.print(f"\n[underline]{criterion}:[/underline]")
+            for suggestion in suggestions:
+                console.print(f"- {suggestion}")
+    
+    console.print("\n[bold yellow]Feedback for Evaluator:[/bold yellow]")
+    if 'evaluator_feedback' in feedback:
+        for criterion, suggestions in feedback['evaluator_feedback'].items():
+            console.print(f"\n[underline]{criterion}:[/underline]")
+            for suggestion in suggestions:
+                console.print(f"- {suggestion}")
+
+    if 'conclusion' in feedback:
+        console.print("\n[bold green]Conclusion:[/bold green]")
+        console.print(Panel(feedback['conclusion'], expand=False))
+
+    console.print(f"\n[bold]Improvements needed:[/bold] {'Yes' if feedback.get('improvements_needed', False) else 'No'}")
+
+def get_additional_feedback(console):
+    console.print("\n[bold]Please provide additional feedback for improvement:[/bold]")
+    return Prompt.ask("Your feedback")
+
+def display_evaluation(evaluation, console):
+    console.print("\n[bold yellow]AI Evaluation:[/bold yellow]")
+    if isinstance(evaluation, str):
+        console.print(evaluation)
+    elif isinstance(evaluation, dict):
+        for criterion, details in evaluation.items():
+            console.print(f"\n[cyan]{criterion}:[/cyan]")
+            if isinstance(details, dict):
+                if 'score' in details:
+                    console.print(f"Score: {details['score']}")
+                if 'explanation' in details:
+                    console.print(f"Explanation: {details['explanation']}")
+                if 'suggestions' in details and details['suggestions']:
+                    console.print("Suggestions:")
+                    for suggestion in details['suggestions']:
+                        console.print(f"- {suggestion}")
+            else:
+                console.print(details)
+    else:
+        console.print("Error: Unexpected evaluation format")
+
+def get_user_evaluation(console):
+    user_scores = {}
+    user_feedbacks = {}
+    
+    console.print("\n[bold]Please rate and provide feedback for each criterion:[/bold]")
+    
+    table = Table(title="Evaluation Criteria", box=box.ROUNDED)
+    table.add_column("Criterion", style="cyan")
+    table.add_column("Score (0-10)", style="magenta")
+    table.add_column("Feedback", style="green")
+
+    for criterion in EVALUATION_CRITERIA.keys():
+        while True:
+            score = Prompt.ask(f"Rate the [cyan]{criterion}[/cyan] (0-10)", default="5")
+            try:
+                score = float(score)
+                if 0 <= score <= 10:
+                    break
+                else:
+                    console.print("[red]Please enter a number between 0 and 10.[/red]")
+            except ValueError:
+                console.print("[red]Invalid input. Please enter a number.[/red]")
+        
+        feedback = Prompt.ask(f"Provide feedback for [cyan]{criterion}[/cyan]")
+        
+        user_scores[criterion] = score
+        user_feedbacks[criterion] = feedback
+        
+        table.add_row(criterion, str(score), feedback)
+
+    console.print(table)
+
+    return UserEvaluation(user_scores, user_feedbacks)
+
+def main():
+    creator = ContentCreator()
+    evaluator = Evaluator()
+    feedback_agent = FeedbackAgent()
+    
+    memory.load_from_file()  # Load previous interactions if available
+    
+    try:
+        while True:
+            prompt = input("Enter a content prompt (or 'quit' to exit): ")
+            if prompt.lower() == 'quit':
+                break
+
+            continue_main_loop = run_interaction(prompt, creator, evaluator, feedback_agent)
+            if not continue_main_loop:
+                break
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        print(traceback.format_exc())
+    finally:
+        memory.save_to_file()  # Save the latest interaction before exiting
+
+if __name__ == "__main__":
+    main()
+
+# ========================
 # File: agents/feedback_agent.py
 # ========================
 
@@ -310,18 +530,15 @@ class FeedbackAgent:
 
     def _parse_feedback(self, feedback):
         sections = feedback.split('[Overall Analysis]')
-        overall_analysis = sections[-1].strip() if len(sections) > 1 else feedback.strip()
-        
-        content_feedback = {criterion: [] for criterion in EVALUATION_CRITERIA}
-        evaluator_feedback = {criterion: [] for criterion in EVALUATION_CRITERIA}
+        overall_analysis = sections[-1].split('[Feedback for Content Creator]')[0].strip() if len(sections) > 1 else feedback.strip()
         
         content_section = feedback.split('[Feedback for Content Creator]')[-1].split('[Feedback for Evaluator]')[0] if '[Feedback for Content Creator]' in feedback else ''
         evaluator_section = feedback.split('[Feedback for Evaluator]')[-1].split('[Conclusion]')[0] if '[Feedback for Evaluator]' in feedback else ''
         
         conclusion = feedback.split('[Conclusion]')[-1].strip() if '[Conclusion]' in feedback else ''
         
-        content_feedback.update(self._extract_criterion_feedback(content_section))
-        evaluator_feedback.update(self._extract_criterion_feedback(evaluator_section))
+        content_feedback = self._extract_criterion_feedback(content_section)
+        evaluator_feedback = self._extract_criterion_feedback(evaluator_section)
         
         improvements_needed = "improvements are needed" in feedback.lower()
 
@@ -339,21 +556,20 @@ class FeedbackAgent:
 
         for line in feedback_text.split('\n'):
             line = line.strip()
-            if line in EVALUATION_CRITERIA:
-                current_criterion = line
-            elif current_criterion and line.startswith('-'):
-                feedback[current_criterion].append(line[1:].strip())
+            if any(criterion in line for criterion in EVALUATION_CRITERIA):
+                current_criterion = next(criterion for criterion in EVALUATION_CRITERIA if criterion in line)
+            elif current_criterion and line:  # Check if line is not empty
+                if line.startswith('-') or line.startswith('•') or (line[0].isdigit() if line else False):
+                    feedback[current_criterion].append(line.lstrip('- •').strip())
 
-        # Ensure all criteria have at least one feedback item
-        for criterion in EVALUATION_CRITERIA:
-            if not feedback[criterion]:
-                feedback[criterion].append("No specific improvements suggested.")
+        # Remove empty feedback
+        feedback = {k: v for k, v in feedback.items() if v}
 
         return feedback
 
     def incorporate_user_feedback(self, previous_feedback, additional_feedback):
         incorporation_prompt = f"""
-        Previous feedback:
+        Previous analysis:
         {previous_feedback['overall_analysis']}
 
         Additional user feedback:
@@ -424,6 +640,7 @@ class ContentCreator:
         )
         self.feedback = None
 
+
     def create_content(self, prompt):
         context = self._generate_context(prompt)
         
@@ -435,7 +652,7 @@ class ContentCreator:
         if response and 'choices' in response:
             content = response['choices'][0]['message']['content']
             if self.feedback:
-                content += "\n\nFeedback Acknowledgment:\n"
+                content += "\n\nFeedback Incorporation:\n"
                 content += self._explain_feedback_incorporation()
             return content
         else:
@@ -448,13 +665,10 @@ class ContentCreator:
             for criterion, suggestions in self.feedback.items():
                 context += f"\n{criterion}:\n"
                 context += "\n".join(f"- {suggestion}" for suggestion in suggestions)
-            context += "\n\nPlease acknowledge the feedback and explain how you've incorporated it into your content."
+                context += "\n\nGenerate the content based on the prompt and incorporate the feedback. After the main content, explain how you incorporated it in your new iteration.\n\n"
         else:
-            context += "Please generate content based on the given prompt."
+             context += "Please generate content based on the given prompt."
         return context
-
-    def learn(self, feedback):
-        self.feedback = feedback
 
     def _explain_feedback_incorporation(self):
         explanation = "Here's how I incorporated the feedback:\n"
@@ -463,6 +677,9 @@ class ContentCreator:
             for suggestion in suggestions:
                 explanation += f"- {suggestion}: [Explain how this suggestion was incorporated]\n"
         return explanation
+
+    def learn(self, feedback):
+        self.feedback = feedback
 
 # ========================
 # File: agents/__init__.py
@@ -519,16 +736,18 @@ class Evaluator:
     def evaluate_content(self, content, objective):
         evaluation_prompt = get_evaluation_prompt(content, objective)
         if self.feedback:
-            evaluation_prompt += "\n\nPlease incorporate the following feedback into your evaluation:"
-            evaluation_prompt += self._explain_feedback_incorporation()
+            evaluation_prompt += "\n\nPlease incorporate the following feedback into your evaluation:\n"
+            for criterion, suggestions in self.feedback.items():
+                evaluation_prompt += f"\n{criterion}:\n"
+                evaluation_prompt += "\n".join(f"- {suggestion}" for suggestion in suggestions)
+                evaluation_prompt += "\n\nAfter your evaluation, explain how you incorporated each piece of feedback."
         
-        messages = [
-            {"role": "system", "content": self.system_message},
+        messages = [            {"role": "system", "content": self.system_message},
             {"role": "user", "content": evaluation_prompt}
         ]
         response = api.get_completion(self.model, messages)
         if response and 'choices' in response:
-            evaluation = response['choices'][0]['message']['content']
+            evaluation = response['choices'][0]['message']['content']            
             parsed_evaluation = self._parse_evaluation(evaluation)
             if not parsed_evaluation:  # If parsing fails, return the raw evaluation
                 return {"Raw Evaluation": evaluation}

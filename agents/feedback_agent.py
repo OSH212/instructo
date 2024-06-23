@@ -84,19 +84,18 @@ class FeedbackAgent:
             line = line.strip()
             if any(criterion in line for criterion in EVALUATION_CRITERIA):
                 current_criterion = next(criterion for criterion in EVALUATION_CRITERIA if criterion in line)
-            elif current_criterion and (line.startswith('-') or line.startswith('•') or line[0].isdigit()):
-                feedback[current_criterion].append(line.lstrip('- •').strip())
+            elif current_criterion and line:  # Check if line is not empty
+                if line.startswith('-') or line.startswith('•') or (line[0].isdigit() if line else False):
+                    feedback[current_criterion].append(line.lstrip('- •').strip())
 
-        # Ensure all criteria have at least one feedback item
-        for criterion in EVALUATION_CRITERIA:
-            if not feedback[criterion]:
-                feedback[criterion].append("No specific improvements suggested.")
+        # Remove empty feedback
+        feedback = {k: v for k, v in feedback.items() if v}
 
         return feedback
 
     def incorporate_user_feedback(self, previous_feedback, additional_feedback):
         incorporation_prompt = f"""
-        Previous feedback:
+        Previous analysis:
         {previous_feedback['overall_analysis']}
 
         Additional user feedback:

@@ -39,6 +39,7 @@ class ContentCreator:
         )
         self.feedback = None
 
+
     def create_content(self, prompt):
         context = self._generate_context(prompt)
         
@@ -50,7 +51,7 @@ class ContentCreator:
         if response and 'choices' in response:
             content = response['choices'][0]['message']['content']
             if self.feedback:
-                content += "\n\nFeedback Acknowledgment:\n"
+                content += "\n\nFeedback Incorporation:\n"
                 content += self._explain_feedback_incorporation()
             return content
         else:
@@ -63,13 +64,10 @@ class ContentCreator:
             for criterion, suggestions in self.feedback.items():
                 context += f"\n{criterion}:\n"
                 context += "\n".join(f"- {suggestion}" for suggestion in suggestions)
-            context += "\n\nPlease acknowledge the feedback and explain how you've incorporated it into your content."
+            context += "\n\nGenerate the content based on the prompt and incorporate the feedback. After the main content, explain how you incorporated each piece of feedback."
         else:
             context += "Please generate content based on the given prompt."
         return context
-
-    def learn(self, feedback):
-        self.feedback = feedback
 
     def _explain_feedback_incorporation(self):
         explanation = "Here's how I incorporated the feedback:\n"
@@ -78,3 +76,6 @@ class ContentCreator:
             for suggestion in suggestions:
                 explanation += f"- {suggestion}: [Explain how this suggestion was incorporated]\n"
         return explanation
+
+    def learn(self, feedback):
+        self.feedback = feedback

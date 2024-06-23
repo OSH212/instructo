@@ -39,11 +39,15 @@ class Evaluator:
         )
         self.feedback = None
     
+    
     def evaluate_content(self, content, objective):
         evaluation_prompt = get_evaluation_prompt(content, objective)
         if self.feedback:
-            evaluation_prompt += "\n\nPlease incorporate the following feedback into your evaluation:"
-            evaluation_prompt += self._explain_feedback_incorporation()
+            evaluation_prompt += "\n\nPlease incorporate the following feedback into your evaluation:\n"
+            for criterion, suggestions in self.feedback.items():
+                evaluation_prompt += f"\n{criterion}:\n"
+                evaluation_prompt += "\n".join(f"- {suggestion}" for suggestion in suggestions)
+            evaluation_prompt += "\n\nAfter your evaluation, explain how you incorporated each piece of feedback."
         
         messages = [
             {"role": "system", "content": self.system_message},
@@ -58,6 +62,7 @@ class Evaluator:
             return parsed_evaluation
         else:
             return {"Error": "I apologize, but I couldn't evaluate the content at this time. Please try again later."}
+
 
     def _parse_evaluation(self, evaluation):
         parsed = {}

@@ -22,14 +22,14 @@ def apply_feedback(creator, evaluator, creator_feedback, evaluator_feedback):
         evaluator.learn(evaluator_feedback)
 
 
-def handle_command(command, prompt, creator, evaluator):
+def handle_command(command, prompt, creator, evaluator, feedback_agent):
     if command == 'quit':
         return False
     elif command == 'new':
         return True
     elif command == 'restart':
         print("\nRestarting interaction with the same prompt.")
-        run_interaction(prompt, creator, evaluator)
+        run_interaction(prompt, creator, evaluator, feedback_agent)
     else:
         print("Invalid command. Please try again.")
     return True
@@ -71,8 +71,20 @@ def run_interaction(prompt, creator, evaluator, feedback_agent):
 
             if decision == "continue":
                 if feedback['improvements_needed']:
+                    # Apply feedback to content creator and evaluator
                     creator.learn(feedback['content_feedback'])
                     evaluator.learn(feedback['evaluator_feedback'])
+                    
+                    # Generate new content with feedback incorporated
+                    new_content = creator.create_content(prompt)
+                    console.print("\n[bold green]Content Creator's response after incorporating feedback:[/bold green]")
+                    console.print(Panel(new_content, title="Updated Generated Content", expand=False), style="cyan")
+                    
+                    # Generate new evaluation with feedback incorporated
+                    new_evaluation = evaluator.evaluate_content(new_content, prompt)
+                    console.print("\n[bold green]Evaluator's response after incorporating feedback:[/bold green]")
+                    display_evaluation(new_evaluation, console)
+                    
                     break
                 else:
                     console.print("No further improvements needed. Starting a new interaction.")
@@ -85,6 +97,9 @@ def run_interaction(prompt, creator, evaluator, feedback_agent):
                 return True
             elif decision == "quit":
                 return False
+        
+        if decision == "quit":
+            break
 
     return True
 
@@ -94,38 +109,24 @@ def display_feedback(feedback, console):
     
     if 'overall_analysis' in feedback:
         console.print(Panel(feedback['overall_analysis'], title="Overall Analysis", expand=False))
-    else:
-        console.print("[yellow]No overall analysis provided.[/yellow]")
 
-    console.print("\n[bold cyan]Feedback for Content Agent:[/bold cyan]")
-    if 'content_feedback' in feedback:
-        for criterion, suggestions in feedback['content_feedback'].items():
-            console.print(f"\n[underline]{criterion}:[/underline]")
-            if suggestions:
-                for suggestion in suggestions:
-                    console.print(f"- {suggestion}")
-            else:
-                console.print("- No specific improvements suggested.")
-    else:
-        console.print("[yellow]No content feedback provided.[/yellow]")
+    # if 'content_feedback' in feedback:
+    #     console.print("\n[bold cyan]Feedback for Content Creator:[/bold cyan]")
+    #     for criterion, suggestions in feedback['content_feedback'].items():
+    #         console.print(f"\n[underline]{criterion}:[/underline]")
+    #         for suggestion in suggestions:
+    #             console.print(f"- {suggestion}")
+    
+    # if 'evaluator_feedback' in feedback:
+    #     console.print("\n[bold yellow]Feedback for Evaluator:[/bold yellow]")
+    #     for criterion, suggestions in feedback['evaluator_feedback'].items():
+    #         console.print(f"\n[underline]{criterion}:[/underline]")
+    #         for suggestion in suggestions:
+    #             console.print(f"- {suggestion}")
 
-    console.print("\n[bold yellow]Feedback for Evaluator Agent:[/bold yellow]")
-    if 'evaluator_feedback' in feedback:
-        for criterion, suggestions in feedback['evaluator_feedback'].items():
-            console.print(f"\n[underline]{criterion}:[/underline]")
-            if suggestions:
-                for suggestion in suggestions:
-                    console.print(f"- {suggestion}")
-            else:
-                console.print("- No specific improvements suggested.")
-    else:
-        console.print("[yellow]No evaluator feedback provided.[/yellow]")
-
-    if 'conclusion' in feedback:
-        console.print("\n[bold green]Conclusion:[/bold green]")
-        console.print(Panel(feedback['conclusion'], expand=False))
-    else:
-        console.print("\n[yellow]No conclusion provided.[/yellow]")
+    # if 'conclusion' in feedback:
+    #     console.print("\n[bold green]Conclusion:[/bold green]")
+    #     console.print(Panel(feedback['conclusion'], expand=False))
 
     console.print(f"\n[bold]Improvements needed:[/bold] {'Yes' if feedback.get('improvements_needed', False) else 'No'}")
 
