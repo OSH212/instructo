@@ -12,19 +12,6 @@ class FeedbackAgent:
             "Your goal is to provide insightful analysis and actionable feedback to enhance AI performance."
         )
 
-    # def analyze_interaction(self, content, evaluation, user_eval):
-    #     feedback_prompt = self._generate_feedback_prompt(content, evaluation, user_eval)
-    #     messages = [
-    #         {"role": "system", "content": self.system_message},
-    #         {"role": "user", "content": feedback_prompt}
-    #     ]
-
-    #     response = api.get_completion(self.model, messages)
-    #     if response and 'choices' in response:
-    #         feedback = response['choices'][0]['message']['content'].strip()
-    #         return self._parse_feedback(feedback)
-    #     return None
-    
 
     def analyze_interaction(self, content, evaluation, user_eval_content, user_feedback_evaluator):
         feedback_prompt = self._generate_feedback_prompt(content, evaluation, user_eval_content, user_feedback_evaluator)
@@ -36,8 +23,31 @@ class FeedbackAgent:
         response = api.get_completion(self.model, messages)
         if response and 'choices' in response:
             feedback = response['choices'][0]['message']['content'].strip()
-            return self._parse_feedback(feedback)
+            parsed_feedback = self._parse_feedback(feedback)
+            
+            # Determine if improvements are needed
+            improvements_needed = self._determine_improvements_needed(parsed_feedback)
+            parsed_feedback['improvements_needed'] = improvements_needed
+
+            return parsed_feedback
         return None
+
+    def _determine_improvements_needed(self, feedback):
+        # Analyze content_feedback and evaluator_feedback
+        content_feedback = feedback.get('content_feedback', {})
+        evaluator_feedback = feedback.get('evaluator_feedback', {})
+
+        # Check if there are any non-empty feedback items
+        if any(content_feedback.values()) or any(evaluator_feedback.values()):
+            return True
+
+        # If no specific feedback, check the overall analysis for improvement indications
+        overall_analysis = feedback.get('overall_analysis', '').lower()
+        improvement_keywords = ['improve', 'enhance', 'refine', 'adjust', 'modify', 'update']
+        if any(keyword in overall_analysis for keyword in improvement_keywords):
+            return True
+
+        return False
 
     def _generate_feedback_prompt(self, content, evaluation, user_eval_content, user_feedback_evaluator):
         return f"""
@@ -63,6 +73,9 @@ class FeedbackAgent:
         [Conclusion]
         (Conclude with whether improvements are needed overall and a brief summary)
 
+        [Improvements Needed]
+        (Explicitly state 'YES' if improvements are needed, or 'NO' if no improvements are necessary. Provide a brief explanation for your decision.)
+
         Ensure you address all of the following criteria in the Content Creator section:
         {', '.join(EVALUATION_CRITERIA.keys())}
 
@@ -83,13 +96,16 @@ class FeedbackAgent:
         content_feedback = self._extract_criterion_feedback(content_section)
         evaluator_feedback = self._extract_criterion_feedback(evaluator_section)
         
-        improvements_needed = "improvements are needed" in feedback.lower()
+        improvements_section = feedback.split('[Improvements Needed]')[-1].strip() if '[Improvements Needed]' in feedback else ''
+        improvements_needed = 'YES' in improvements_section.upper()
+        improvements_explanation = improvements_section.split('\n', 1)[-1].strip() if '\n' in improvements_section else ''
 
         return {
             'overall_analysis': overall_analysis,
             'content_feedback': content_feedback,
             'evaluator_feedback': evaluator_feedback,
             'improvements_needed': improvements_needed,
+            'improvements_explanation': improvements_explanation,
             'conclusion': conclusion
         }
 

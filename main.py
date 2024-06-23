@@ -152,7 +152,9 @@ def display_feedback(feedback, console):
     #     console.print("\n[bold green]Conclusion:[/bold green]")
     #     console.print(Panel(feedback['conclusion'], expand=False))
 
-    console.print(f"\n[bold]Improvements needed:[/bold] {'Yes' if feedback.get('improvements_needed', False) else 'No'}")
+    # console.print(f"\n[bold]Improvements needed:[/bold] {'Yes' if feedback.get('improvements_needed', False) else 'No'}")
+    # if 'improvements_explanation' in feedback:
+    #     console.print(Panel(feedback['improvements_explanation'], title="Explanation", expand=False))
 
 def get_additional_feedback(console):
     console.print("\n[bold]Please provide additional feedback for improvement:[/bold]")
@@ -179,39 +181,7 @@ def display_evaluation(evaluation, console):
     else:
         console.print("Error: Unexpected evaluation format")
 
-# def get_user_evaluation(console):
-#     user_scores = {}
-#     user_feedbacks = {}
-    
-#     console.print("\n[bold]Please rate and provide feedback for each criterion:[/bold]")
-    
-#     table = Table(title="Evaluation Criteria", box=box.ROUNDED)
-#     table.add_column("Criterion", style="cyan")
-#     table.add_column("Score (0-10)", style="magenta")
-#     table.add_column("Feedback", style="green")
 
-#     for criterion in EVALUATION_CRITERIA.keys():
-#         while True:
-#             score = Prompt.ask(f"Rate the [cyan]{criterion}[/cyan] (0-10)", default="5")
-#             try:
-#                 score = float(score)
-#                 if 0 <= score <= 10:
-#                     break
-#                 else:
-#                     console.print("[red]Please enter a number between 0 and 10.[/red]")
-#             except ValueError:
-#                 console.print("[red]Invalid input. Please enter a number.[/red]")
-        
-#         feedback = Prompt.ask(f"Provide feedback for [cyan]{criterion}[/cyan]")
-        
-#         user_scores[criterion] = score
-#         user_feedbacks[criterion] = feedback
-        
-#         table.add_row(criterion, str(score), feedback)
-
-#     console.print(table)
-
-#     return UserEvaluation(user_scores, user_feedbacks)
 def get_user_evaluation_for_content(console):
     user_scores = {}
     user_feedbacks = {}
