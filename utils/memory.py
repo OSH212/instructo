@@ -9,17 +9,18 @@ class Memory:
         self.interactions = deque(maxlen=max_size)
         self.filename = f'memory_{datetime.now().strftime("%Y%m%d_%H%M%S")}.yaml'
 
-    def add_interaction(self, prompt, content, ai_evaluation, user_evaluation):
+    def add_interaction(self, prompt, content, ai_evaluation, user_evaluation_content, user_feedback_evaluator):
         timestamp = datetime.now().isoformat()
         self.interactions.append({
             'timestamp': timestamp,
             'prompt': prompt,
             'content': content,
             'ai_evaluation': ai_evaluation,
-            'user_evaluation': {
-                'score': user_evaluation.score,
-                'feedback': user_evaluation.feedback
-            }
+            'user_evaluation_content': {
+                'score': user_evaluation_content.score,
+                'feedback': user_evaluation_content.feedback
+            },
+            'user_feedback_evaluator': user_feedback_evaluator
         })
 
     def get_recent_interactions(self, n=5):
@@ -42,9 +43,9 @@ class Memory:
                 if loaded_data:
                     self.interactions = deque(
                         [{**interaction, 
-                        'user_evaluation': UserEvaluation(
-                            score=interaction['user_evaluation']['score'],
-                            feedback=interaction['user_evaluation']['feedback']
+                        'user_evaluation_content': UserEvaluation(
+                            score=interaction['user_evaluation_content']['score'],
+                            feedback=interaction['user_evaluation_content']['feedback']
                         )}
                         for interaction in loaded_data],
                         maxlen=self.interactions.maxlen

@@ -12,8 +12,22 @@ class FeedbackAgent:
             "Your goal is to provide insightful analysis and actionable feedback to enhance AI performance."
         )
 
-    def analyze_interaction(self, content, evaluation, user_eval):
-        feedback_prompt = self._generate_feedback_prompt(content, evaluation, user_eval)
+    # def analyze_interaction(self, content, evaluation, user_eval):
+    #     feedback_prompt = self._generate_feedback_prompt(content, evaluation, user_eval)
+    #     messages = [
+    #         {"role": "system", "content": self.system_message},
+    #         {"role": "user", "content": feedback_prompt}
+    #     ]
+
+    #     response = api.get_completion(self.model, messages)
+    #     if response and 'choices' in response:
+    #         feedback = response['choices'][0]['message']['content'].strip()
+    #         return self._parse_feedback(feedback)
+    #     return None
+    
+
+    def analyze_interaction(self, content, evaluation, user_eval_content, user_feedback_evaluator):
+        feedback_prompt = self._generate_feedback_prompt(content, evaluation, user_eval_content, user_feedback_evaluator)
         messages = [
             {"role": "system", "content": self.system_message},
             {"role": "user", "content": feedback_prompt}
@@ -25,14 +39,15 @@ class FeedbackAgent:
             return self._parse_feedback(feedback)
         return None
 
-    def _generate_feedback_prompt(self, content, evaluation, user_eval):
+    def _generate_feedback_prompt(self, content, evaluation, user_eval_content, user_feedback_evaluator):
         return f"""
         Analyze the following interaction:
 
         Original Prompt: {content['prompt']}
         Generated Content: {content['content']}
         AI Evaluation: {evaluation}
-        User Evaluation: {user_eval}
+        User Evaluation for Content: {user_eval_content}
+        User Feedback for Evaluator: {user_feedback_evaluator}
 
         Provide a comprehensive analysis and actionable feedback in the following structure:
 
@@ -43,16 +58,18 @@ class FeedbackAgent:
         (For each criterion, provide specific, actionable feedback for the content creator. If no improvement is needed, explicitly state why.)
 
         [Feedback for Evaluator]
-        (For each criterion, provide specific, actionable feedback for the evaluator. If no improvement is needed, explicitly state why.)
+        (Provide specific, actionable feedback for the evaluator based on the user's feedback and your analysis. If no improvement is needed, explicitly state why.)
 
         [Conclusion]
         (Conclude with whether improvements are needed overall and a brief summary)
 
-        Ensure you address all of the following criteria in both the Content Creator and Evaluator sections:
+        Ensure you address all of the following criteria in the Content Creator section:
         {', '.join(EVALUATION_CRITERIA.keys())}
 
         For each criterion, provide at least one specific suggestion for improvement or explicitly state why no improvement is needed.
         """
+
+
 
     def _parse_feedback(self, feedback):
         sections = feedback.split('[Overall Analysis]')

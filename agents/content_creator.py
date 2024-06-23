@@ -61,9 +61,10 @@ class ContentCreator:
         context = f"Prompt: {prompt}\n\n"
         if self.feedback:
             context += "Please incorporate the following feedback into your content:\n"
-            for criterion, suggestions in self.feedback.items():
+            for criterion, details in self.feedback.items():
                 context += f"\n{criterion}:\n"
-                context += "\n".join(f"- {suggestion}" for suggestion in suggestions)
+                context += f"Score: {details['score']}\n"
+                context += f"Feedback: {details['feedback']}\n"
             context += "\n\nGenerate the content based on the prompt and incorporate the feedback. After the main content, explain how you incorporated each piece of feedback."
         else:
             context += "Please generate content based on the given prompt."
@@ -71,10 +72,11 @@ class ContentCreator:
 
     def _explain_feedback_incorporation(self):
         explanation = "I have received and incorporated the following feedback:\n"
-        for criterion, suggestions in self.feedback.items():
+        for criterion, details in self.feedback.items():
             explanation += f"\n{criterion}:\n"
-            for suggestion in suggestions:
-                explanation += f"- {suggestion}: [Specific explanation of how this suggestion was incorporated]\n"
+            explanation += f"Score: {details['score']}\n"
+            explanation += f"Feedback: {details['feedback']}\n"
+            explanation += f"Incorporation: [Specific explanation of how this feedback was incorporated]\n"
         return explanation
 
     def learn(self, feedback):

@@ -52,14 +52,22 @@ def run_interaction(prompt, creator, evaluator, feedback_agent):
         evaluation = evaluator.evaluate_content(content, prompt)
         display_evaluation(evaluation, console)
 
-        # User Evaluation
-        user_eval = get_user_evaluation(console)
+        # User Evaluation for Content
+        user_eval_content = get_user_evaluation_for_content(console)
+
+        # User Feedback for Evaluator
+        user_feedback_evaluator = get_user_feedback_for_evaluator(console)
 
         # Store interaction in memory
-        memory.add_interaction(prompt, content, evaluation, user_eval)
+        memory.add_interaction(prompt, content, evaluation, user_eval_content, user_feedback_evaluator)
 
         # Feedback Agent Analysis
-        feedback = feedback_agent.analyze_interaction({'prompt': prompt, 'content': content}, evaluation, user_eval)
+        feedback = feedback_agent.analyze_interaction(
+            {'prompt': prompt, 'content': content},
+            evaluation,
+            user_eval_content,
+            user_feedback_evaluator
+        )
         display_feedback(feedback, console)
 
         while True:
@@ -86,19 +94,26 @@ def run_interaction(prompt, creator, evaluator, feedback_agent):
                     display_evaluation(new_evaluation, console)
                     
                     # Get user evaluation for the new content and evaluation
-                    new_user_eval = get_user_evaluation(console)
+                    new_user_eval_content = get_user_evaluation_for_content(console)
+                    new_user_feedback_evaluator = get_user_feedback_for_evaluator(console)
                     
                     # Store new interaction in memory
-                    memory.add_interaction(prompt, new_content, new_evaluation, new_user_eval)
+                    memory.add_interaction(prompt, new_content, new_evaluation, new_user_eval_content, new_user_feedback_evaluator)
                     
                     # Feedback Agent Analysis for the new iteration
-                    new_feedback = feedback_agent.analyze_interaction({'prompt': prompt, 'content': new_content}, new_evaluation, new_user_eval)
+                    new_feedback = feedback_agent.analyze_interaction(
+                        {'prompt': prompt, 'content': new_content},
+                        new_evaluation,
+                        new_user_eval_content,
+                        new_user_feedback_evaluator
+                    )
                     display_feedback(new_feedback, console)
                     
                     # Update variables for the next iteration
                     content = new_content
                     evaluation = new_evaluation
-                    user_eval = new_user_eval
+                    user_eval_content = new_user_eval_content
+                    user_feedback_evaluator = new_user_feedback_evaluator
                     feedback = new_feedback
                 else:
                     console.print("No further improvements needed. Starting a new interaction.")
@@ -111,8 +126,6 @@ def run_interaction(prompt, creator, evaluator, feedback_agent):
                 return True
             elif decision == "quit":
                 return False
-
-    return True
 
 
 def display_feedback(feedback, console):
@@ -166,13 +179,46 @@ def display_evaluation(evaluation, console):
     else:
         console.print("Error: Unexpected evaluation format")
 
-def get_user_evaluation(console):
+# def get_user_evaluation(console):
+#     user_scores = {}
+#     user_feedbacks = {}
+    
+#     console.print("\n[bold]Please rate and provide feedback for each criterion:[/bold]")
+    
+#     table = Table(title="Evaluation Criteria", box=box.ROUNDED)
+#     table.add_column("Criterion", style="cyan")
+#     table.add_column("Score (0-10)", style="magenta")
+#     table.add_column("Feedback", style="green")
+
+#     for criterion in EVALUATION_CRITERIA.keys():
+#         while True:
+#             score = Prompt.ask(f"Rate the [cyan]{criterion}[/cyan] (0-10)", default="5")
+#             try:
+#                 score = float(score)
+#                 if 0 <= score <= 10:
+#                     break
+#                 else:
+#                     console.print("[red]Please enter a number between 0 and 10.[/red]")
+#             except ValueError:
+#                 console.print("[red]Invalid input. Please enter a number.[/red]")
+        
+#         feedback = Prompt.ask(f"Provide feedback for [cyan]{criterion}[/cyan]")
+        
+#         user_scores[criterion] = score
+#         user_feedbacks[criterion] = feedback
+        
+#         table.add_row(criterion, str(score), feedback)
+
+#     console.print(table)
+
+#     return UserEvaluation(user_scores, user_feedbacks)
+def get_user_evaluation_for_content(console):
     user_scores = {}
     user_feedbacks = {}
     
-    console.print("\n[bold]Please rate and provide feedback for each criterion:[/bold]")
+    console.print("\n[bold]Please rate and provide feedback for the content:[/bold]")
     
-    table = Table(title="Evaluation Criteria", box=box.ROUNDED)
+    table = Table(title="Content Evaluation Criteria", box=box.ROUNDED)
     table.add_column("Criterion", style="cyan")
     table.add_column("Score (0-10)", style="magenta")
     table.add_column("Feedback", style="green")
@@ -199,6 +245,10 @@ def get_user_evaluation(console):
     console.print(table)
 
     return UserEvaluation(user_scores, user_feedbacks)
+
+def get_user_feedback_for_evaluator(console):
+    console.print("\n[bold]Please provide feedback for the AI Evaluator:[/bold]")
+    return Prompt.ask("Your feedback for the evaluator")
 
 def main():
     creator = ContentCreator()
