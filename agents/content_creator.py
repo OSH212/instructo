@@ -70,11 +70,11 @@ class ContentCreator:
         return context
 
     def _explain_feedback_incorporation(self):
-        explanation = "Here's how I incorporated the feedback:\n"
+        explanation = "I have received and incorporated the following feedback:\n"
         for criterion, suggestions in self.feedback.items():
             explanation += f"\n{criterion}:\n"
             for suggestion in suggestions:
-                explanation += f"- {suggestion}: [Explain how this suggestion was incorporated]\n"
+                explanation += f"- {suggestion}: [Specific explanation of how this suggestion was incorporated]\n"
         return explanation
 
     def learn(self, feedback):

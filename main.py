@@ -85,7 +85,21 @@ def run_interaction(prompt, creator, evaluator, feedback_agent):
                     console.print("\n[bold green]Evaluator's response after incorporating feedback:[/bold green]")
                     display_evaluation(new_evaluation, console)
                     
-                    break
+                    # Get user evaluation for the new content and evaluation
+                    new_user_eval = get_user_evaluation(console)
+                    
+                    # Store new interaction in memory
+                    memory.add_interaction(prompt, new_content, new_evaluation, new_user_eval)
+                    
+                    # Feedback Agent Analysis for the new iteration
+                    new_feedback = feedback_agent.analyze_interaction({'prompt': prompt, 'content': new_content}, new_evaluation, new_user_eval)
+                    display_feedback(new_feedback, console)
+                    
+                    # Update variables for the next iteration
+                    content = new_content
+                    evaluation = new_evaluation
+                    user_eval = new_user_eval
+                    feedback = new_feedback
                 else:
                     console.print("No further improvements needed. Starting a new interaction.")
                     return True
@@ -97,9 +111,6 @@ def run_interaction(prompt, creator, evaluator, feedback_agent):
                 return True
             elif decision == "quit":
                 return False
-        
-        if decision == "quit":
-            break
 
     return True
 

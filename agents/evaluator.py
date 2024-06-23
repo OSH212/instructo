@@ -56,12 +56,23 @@ class Evaluator:
         response = api.get_completion(self.model, messages)
         if response and 'choices' in response:
             evaluation = response['choices'][0]['message']['content']
+            if self.feedback:
+                evaluation += "\n\nFeedback Incorporation:\n"
+                evaluation += self._explain_feedback_incorporation()
             parsed_evaluation = self._parse_evaluation(evaluation)
             if not parsed_evaluation:  # If parsing fails, return the raw evaluation
                 return {"Raw Evaluation": evaluation}
             return parsed_evaluation
         else:
             return {"Error": "I apologize, but I couldn't evaluate the content at this time. Please try again later."}
+        
+    def _explain_feedback_incorporation(self):
+        explanation = "I have received and incorporated the following feedback into my evaluation:\n"
+        for criterion, suggestions in self.feedback.items():
+            explanation += f"\n{criterion}:\n"
+            for suggestion in suggestions:
+                explanation += f"- {suggestion}: [Specific explanation of how this suggestion was incorporated into the evaluation]\n"
+        return explanation
 
 
     def _parse_evaluation(self, evaluation):
@@ -88,11 +99,3 @@ class Evaluator:
 
     def learn(self, feedback):
         self.feedback = feedback
-
-    def _explain_feedback_incorporation(self):
-        explanation = "Here's how I incorporated the feedback into my evaluation:\n"
-        for criterion, suggestions in self.feedback.items():
-            explanation += f"\n{criterion}:\n"
-            for suggestion in suggestions:
-                explanation += f"- {suggestion}: [Explain how this suggestion was incorporated into the evaluation]\n"
-        return explanation
