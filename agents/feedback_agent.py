@@ -1,7 +1,7 @@
 from utils.api_handler import api
 from config import FEEDBACK_MODEL
-from models.evaluation import UserEvaluation
 from utils.guidelines import EVALUATION_CRITERIA
+
 
 
 class FeedbackAgent:
@@ -13,95 +13,111 @@ class FeedbackAgent:
         )
 
     def analyze_interaction(self, content, evaluation, user_eval):
-        interpretation_prompt = self._generate_interpretation_prompt(content, evaluation, user_eval)
+        feedback_prompt = self._generate_feedback_prompt(content, evaluation, user_eval)
         messages = [
             {"role": "system", "content": self.system_message},
-            {"role": "user", "content": interpretation_prompt}
-        ]
-
-        response = api.get_completion(self.model, messages)
-        if response and 'choices' in response:
-            interpretation = response['choices'][0]['message']['content'].strip()
-            improvements_needed = "improvements needed" in interpretation.lower()
-            return interpretation, improvements_needed
-        return None, True  # Default to improvements needed if analysis fails
-
-    def generate_improvement_suggestions(self, interpretation):
-        feedback_prompt = self._generate_feedback_prompt(interpretation)
-        messages = [
-            {"role": "system", "content": self.system_message},
-            {"role": "user", "content": interpretation},
-            {"role": "assistant", "content": "I understand. I'll provide specific, actionable feedback for both the content creator and the evaluator based on the previous analysis."},
             {"role": "user", "content": feedback_prompt}
         ]
 
         response = api.get_completion(self.model, messages)
         if response and 'choices' in response:
-            suggestions = response['choices'][0]['message']['content']
-            return self._parse_suggestions(suggestions)
-        return None, None
+            feedback = response['choices'][0]['message']['content'].strip()
+            return self._parse_feedback(feedback)
+        return None
 
-    def _generate_interpretation_prompt(self, content, evaluation, user_eval):
+    def _generate_feedback_prompt(self, content, evaluation, user_eval):
         return f"""
         Analyze the following interaction:
 
         Original Prompt: {content['prompt']}
         Generated Content: {content['content']}
         AI Evaluation: {evaluation}
-        User Score: {user_eval.score}
-        User Feedback: {user_eval.feedback}
+        User Evaluation: {user_eval}
 
-        Your tasks:
-        1. Compare the AI evaluation with the user feedback, noting any discrepancies.
-        2. Assess the quality of the generated content in light of both evaluations.
-        3. Determine if improvements are needed for the content, the evaluation process, or both.
+        Provide a comprehensive analysis and actionable feedback in the following structure:
 
-        Provide a detailed analysis addressing the following:
-        1. Content Quality: Assess the strengths and weaknesses of the generated content.
-        2. Evaluation Accuracy: Determine if the AI evaluation was fair and accurate.
-        3. User Satisfaction: Analyze the user's feedback and score in relation to the content and AI evaluation.
-        4. Improvement Needs: Specify if improvements are needed for the content creator, evaluator, or both.
+        [Overall Analysis]
+        (Provide a brief overall analysis of the interaction, including major discrepancies between AI and user evaluations)
 
-        Conclude with one of the following decisions, providing a thorough explanation:
-        1. "No improvements needed" if the content is exceptional and both AI and user evaluations align positively.
-        2. "Improvements needed" if there are discrepancies or clear areas for enhancement in either the content or evaluation process.
+        [Feedback for Content Creator]
+        (For each criterion, provide specific, actionable feedback for the content creator. If no improvement is needed, explicitly state why.)
+
+        [Feedback for Evaluator]
+        (For each criterion, provide specific, actionable feedback for the evaluator. If no improvement is needed, explicitly state why.)
+
+        [Conclusion]
+        (Conclude with whether improvements are needed overall and a brief summary)
+
+        Ensure you address all of the following criteria in both the Content Creator and Evaluator sections:
+        {', '.join(EVALUATION_CRITERIA.keys())}
+
+        For each criterion, provide at least one specific suggestion for improvement or explicitly state why no improvement is needed.
         """
 
-    def _generate_feedback_prompt(self, interpretation):
-        return """
-        Based on your previous analysis, provide specific, actionable feedback for both the content creator and the evaluator:
+    def _parse_feedback(self, feedback):
+        sections = feedback.split('[Overall Analysis]')
+        overall_analysis = sections[-1].split('[Feedback for Content Creator]')[0].strip() if len(sections) > 1 else feedback.strip()
+        
+        content_section = feedback.split('[Feedback for Content Creator]')[-1].split('[Feedback for Evaluator]')[0] if '[Feedback for Content Creator]' in feedback else ''
+        evaluator_section = feedback.split('[Feedback for Evaluator]')[-1].split('[Conclusion]')[0] if '[Feedback for Evaluator]' in feedback else ''
+        
+        conclusion = feedback.split('[Conclusion]')[-1].strip() if '[Conclusion]' in feedback else ''
+        
+        content_feedback = self._extract_criterion_feedback(content_section)
+        evaluator_feedback = self._extract_criterion_feedback(evaluator_section)
+        
+        improvements_needed = "improvements are needed" in feedback.lower()
 
-        1. For the content creator:
-           - Identify key areas for improvement in the content.
-           - Suggest specific strategies to enhance content quality, relevance, and engagement.
-           - Provide examples or techniques that could be applied to address the identified weaknesses.
+        return {
+            'overall_analysis': overall_analysis,
+            'content_feedback': content_feedback,
+            'evaluator_feedback': evaluator_feedback,
+            'improvements_needed': improvements_needed,
+            'conclusion': conclusion
+        }
 
-        2. For the evaluator:
-           - Assess the accuracy and fairness of the evaluation.
-           - Suggest improvements in the evaluation process or criteria.
-           - Provide guidance on how to align the AI evaluation more closely with user expectations and content quality.
-
-        Ensure your suggestions are detailed, practical, and tailored to the specific strengths and weaknesses identified in your analysis.
-        """
-
-    def _parse_suggestions(self, suggestions):
-        creator_feedback = {}
-        evaluator_feedback = {}
-        current_section = None
+    def _extract_criterion_feedback(self, feedback_text):
+        feedback = {criterion: [] for criterion in EVALUATION_CRITERIA}
         current_criterion = None
 
-        for line in suggestions.split('\n'):
+        for line in feedback_text.split('\n'):
             line = line.strip()
-            if line.startswith("For the content creator:"):
-                current_section = "creator"
-            elif line.startswith("For the evaluator:"):
-                current_section = "evaluator"
-            elif line in EVALUATION_CRITERIA:
-                current_criterion = line
-            elif current_section and current_criterion:
-                if current_section == "creator":
-                    creator_feedback.setdefault(current_criterion, []).append(line)
-                else:
-                    evaluator_feedback.setdefault(current_criterion, []).append(line)
+            if any(criterion in line for criterion in EVALUATION_CRITERIA):
+                current_criterion = next(criterion for criterion in EVALUATION_CRITERIA if criterion in line)
+            elif current_criterion and (line.startswith('-') or line.startswith('•') or line[0].isdigit()):
+                feedback[current_criterion].append(line.lstrip('- •').strip())
 
-        return creator_feedback, evaluator_feedback
+        # Ensure all criteria have at least one feedback item
+        for criterion in EVALUATION_CRITERIA:
+            if not feedback[criterion]:
+                feedback[criterion].append("No specific improvements suggested.")
+
+        return feedback
+
+    def incorporate_user_feedback(self, previous_feedback, additional_feedback):
+        incorporation_prompt = f"""
+        Previous feedback:
+        {previous_feedback['overall_analysis']}
+
+        Additional user feedback:
+        {additional_feedback}
+
+        Please incorporate the additional user feedback into your previous analysis and feedback. Update your recommendations for both the content creator and evaluator based on this new information.
+
+        Provide your updated feedback in the same structure as before:
+        [Overall Analysis]
+        [Feedback for Content Creator]
+        [Feedback for Evaluator]
+        [Conclusion]
+        """
+
+        messages = [
+            {"role": "system", "content": self.system_message},
+            {"role": "user", "content": incorporation_prompt}
+        ]
+
+        response = api.get_completion(self.model, messages)
+        if response and 'choices' in response:
+            updated_feedback = response['choices'][0]['message']['content']
+            return self._parse_feedback(updated_feedback)
+        return previous_feedback

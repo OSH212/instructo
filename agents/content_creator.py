@@ -37,8 +37,10 @@ class ContentCreator:
             "- Ensure content is informative, engaging, and thought-provoking\n\n"
             "Your goal is to produce content of the highest caliber, demonstrating thorough research, linguistic mastery, and unwavering adherence to the given objective."
         )
-    def create_content(self, prompt, previous_content=None, feedback=None):
-        context = self._generate_context(prompt, previous_content, feedback)
+        self.feedback = None
+
+    def create_content(self, prompt):
+        context = self._generate_context(prompt)
         
         messages = [
             {"role": "system", "content": self.system_message},
@@ -47,34 +49,32 @@ class ContentCreator:
         response = api.get_completion(self.model, messages)
         if response and 'choices' in response:
             content = response['choices'][0]['message']['content']
-            if feedback:
+            if self.feedback:
                 content += "\n\nFeedback Acknowledgment:\n"
-                for criterion, suggestions in feedback.items():
-                    content += f"\n{criterion}:\n"
-                    content += "\n".join(f"- {suggestion}" for suggestion in suggestions)
-                content += "\n\nI have incorporated the above feedback into this content."
+                content += self._explain_feedback_incorporation()
             return content
         else:
             return "I apologize, but I couldn't generate content at this time. Please try again later."
 
-    def _generate_context(self, prompt, previous_content, feedback):
+    def _generate_context(self, prompt):
         context = f"Prompt: {prompt}\n\n"
-        
-        if previous_content:
-            context += f"Previous content:\n{previous_content}\n\n"
-        
-        if feedback:
-            context += "Feedback for improvement:\n"
-            for criterion, suggestions in feedback.items():
+        if self.feedback:
+            context += "Please incorporate the following feedback into your content:\n"
+            for criterion, suggestions in self.feedback.items():
                 context += f"\n{criterion}:\n"
                 context += "\n".join(f"- {suggestion}" for suggestion in suggestions)
-            context += "\n\nPlease acknowledge the feedback and suggested improvements, then generate new or improved content based on the prompt and feedback. Explain how you incorporated each piece of feedback."
+            context += "\n\nPlease acknowledge the feedback and explain how you've incorporated it into your content."
         else:
             context += "Please generate content based on the given prompt."
-        
         return context
 
     def learn(self, feedback):
-        for criterion, suggestions in feedback.items():
-            self.system_message += f"\n\nImprovement note for {criterion}:\n"
-            self.system_message += "\n".join(f"- {suggestion}" for suggestion in suggestions)
+        self.feedback = feedback
+
+    def _explain_feedback_incorporation(self):
+        explanation = "Here's how I incorporated the feedback:\n"
+        for criterion, suggestions in self.feedback.items():
+            explanation += f"\n{criterion}:\n"
+            for suggestion in suggestions:
+                explanation += f"- {suggestion}: [Explain how this suggestion was incorporated]\n"
+        return explanation

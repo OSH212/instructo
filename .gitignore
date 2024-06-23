@@ -3,7 +3,6 @@
 
 # But not:
 !.gitignore
-!.env
 !*.py
 !README.md
 !project-tree.md
