@@ -1,6 +1,8 @@
 from utils.api_handler import api
 from config import FEEDBACK_MODEL
 from models.evaluation import UserEvaluation
+from utils.guidelines import EVALUATION_CRITERIA
+
 
 class FeedbackAgent:
     def __init__(self):
@@ -20,8 +22,9 @@ class FeedbackAgent:
         response = api.get_completion(self.model, messages)
         if response and 'choices' in response:
             interpretation = response['choices'][0]['message']['content'].strip()
-            return interpretation
-        return None
+            improvements_needed = "improvements needed" in interpretation.lower()
+            return interpretation, improvements_needed
+        return None, True  # Default to improvements needed if analysis fails
 
     def generate_improvement_suggestions(self, interpretation):
         feedback_prompt = self._generate_feedback_prompt(interpretation)
@@ -82,10 +85,23 @@ class FeedbackAgent:
         """
 
     def _parse_suggestions(self, suggestions):
-        creator_feedback = ""
-        evaluator_feedback = ""
-        if "For the content creator:" in suggestions:
-            creator_feedback = suggestions.split("For the content creator:", 1)[1].split("For the evaluator:", 1)[0].strip()
-        if "For the evaluator:" in suggestions:
-            evaluator_feedback = suggestions.split("For the evaluator:", 1)[1].strip()
+        creator_feedback = {}
+        evaluator_feedback = {}
+        current_section = None
+        current_criterion = None
+
+        for line in suggestions.split('\n'):
+            line = line.strip()
+            if line.startswith("For the content creator:"):
+                current_section = "creator"
+            elif line.startswith("For the evaluator:"):
+                current_section = "evaluator"
+            elif line in EVALUATION_CRITERIA:
+                current_criterion = line
+            elif current_section and current_criterion:
+                if current_section == "creator":
+                    creator_feedback.setdefault(current_criterion, []).append(line)
+                else:
+                    evaluator_feedback.setdefault(current_criterion, []).append(line)
+
         return creator_feedback, evaluator_feedback

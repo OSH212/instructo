@@ -39,8 +39,13 @@ class Evaluator:
             "Avoid emotional language, maintaining a neutral, professional tone throughout."
         )
 
-    def evaluate_content(self, content, objective):
+    def evaluate_content(self, content, objective, feedback=None):
         evaluation_prompt = get_evaluation_prompt(content, objective)
+        if feedback:
+            evaluation_prompt += "\n\nPlease incorporate the following feedback into your evaluation:"
+            for criterion, suggestions in feedback.items():
+                evaluation_prompt += f"\n\n{criterion}:\n"
+                evaluation_prompt += "\n".join(f"- {suggestion}" for suggestion in suggestions)
         
         messages = [
             {"role": "system", "content": self.system_message},
@@ -52,6 +57,12 @@ class Evaluator:
             parsed_evaluation = self._parse_evaluation(full_evaluation)
             if not parsed_evaluation['overall_assessment'] and not parsed_evaluation['recommendations']:
                 return full_evaluation  # Return full text if parsing fails
+            if feedback:
+                parsed_evaluation['feedback_acknowledgment'] = "Feedback Acknowledgment:\n"
+                for criterion, suggestions in feedback.items():
+                    parsed_evaluation['feedback_acknowledgment'] += f"\n{criterion}:\n"
+                    parsed_evaluation['feedback_acknowledgment'] += "\n".join(f"- {suggestion}" for suggestion in suggestions)
+                parsed_evaluation['feedback_acknowledgment'] += "\n\nI have incorporated the above feedback into this evaluation."
             return parsed_evaluation
         else:
             return "I apologize, but I couldn't evaluate the content at this time. Please try again later."
@@ -61,27 +72,42 @@ class Evaluator:
             'overall_assessment': '',
             'recommendations': [],
             'no_improvements_needed': False,
-            'full_evaluation': evaluation
+            'full_evaluation': evaluation,
+            'criteria_evaluations': {}
         }
         
         lines = evaluation.split('\n')
         current_section = None
+        current_criterion = None
         for line in lines:
             line = line.strip()
-            if line.lower().startswith("overall assessment:"):
+            if line in EVALUATION_CRITERIA:
+                current_criterion = line
+                parsed['criteria_evaluations'][current_criterion] = {'score': None, 'explanation': '', 'suggestions': []}
+            elif line.lower().startswith("score:") and current_criterion:
+                parsed['criteria_evaluations'][current_criterion]['score'] = float(line.split(":")[1].strip())
+            elif line.lower().startswith("explanation:") and current_criterion:
+                parsed['criteria_evaluations'][current_criterion]['explanation'] = line.split(":", 1)[1].strip()
+            elif line.lower().startswith("suggestions:"):
+                current_section = 'suggestions'
+            elif current_section == 'suggestions' and line.startswith("-") and current_criterion:
+                parsed['criteria_evaluations'][current_criterion]['suggestions'].append(line[1:].strip())
+            elif line.lower().startswith("overall assessment:"):
                 current_section = 'overall_assessment'
                 parsed['overall_assessment'] = line.split(":", 1)[1].strip()
+            elif current_section == 'overall_assessment':
+                parsed['overall_assessment'] += " " + line
             elif line.lower().startswith("key recommendations for improvement:"):
                 current_section = 'recommendations'
             elif current_section == 'recommendations' and line.startswith("-"):
                 parsed['recommendations'].append(line[1:].strip())
-            elif current_section == 'overall_assessment':
-                parsed['overall_assessment'] += " " + line
-        
+
         if "no improvements needed" in parsed['overall_assessment'].lower() or not parsed['recommendations']:
             parsed['no_improvements_needed'] = True
 
         return parsed
 
     def learn(self, feedback):
-        self.system_message += f"\n\nImprovement note: {feedback}"
+        for criterion, suggestions in feedback.items():
+            self.system_message += f"\n\nImprovement note for {criterion}:\n"
+            self.system_message += "\n".join(f"- {suggestion}" for suggestion in suggestions)

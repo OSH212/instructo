@@ -40,28 +40,38 @@ def parse_evaluation(evaluation):
     return evaluation
 
 def display_evaluation(evaluation, console):
-    if 'full_evaluation' in evaluation:
-        console.print(Panel(evaluation['full_evaluation'], title="AI Evaluation", expand=False), style="yellow")
+    console.print("\n[bold yellow]AI Evaluation:[/bold yellow]")
+    console.print(f"Overall Assessment: {evaluation['overall_assessment']}")
+    console.print("\nRecommendations:")
+    for recommendation in evaluation['recommendations']:
+        console.print(f"- {recommendation}")
+    
+    if evaluation.get('no_improvements_needed', False):
+        console.print("\n[green]No improvements needed. The content is exceptional.[/green]")
     else:
-        overall = Panel(evaluation['overall_assessment'], title="Overall Assessment", expand=False)
-        recommendations = Panel("\n".join([f"- {r}" for r in evaluation['recommendations']]), title="Recommendations", expand=False)
-        console.print(Columns([overall, recommendations]), style="yellow")
+        console.print("\n[yellow]Improvements may be needed based on the recommendations above.[/yellow]")
+    
+    if 'feedback_acknowledgment' in evaluation:
+        console.print("\n[bold cyan]Feedback Acknowledgment:[/bold cyan]")
+        console.print(evaluation['feedback_acknowledgment'])
+    
+    console.print("\nFull Evaluation:", style="dim")
+    console.print(evaluation['full_evaluation'])
 
 def run_interaction(prompt, creator, evaluator, feedback_agent):
-    previous_content = None
-    creator_feedback = None
     console = Console()
     
     while True:
+        # Reset feedback variables at the start of each iteration
+        creator_feedback = None
+        evaluator_feedback = None
+
         # Content creation
-        content = creator.create_content(prompt, previous_content, creator_feedback)
-        if creator_feedback:
-            console.print("\n[bold cyan]Content Creator's Response to Feedback:[/bold cyan]")
-            console.print(f"The content creator has incorporated the following feedback: {creator_feedback}")
+        content = creator.create_content(prompt, previous_content=None, feedback=creator_feedback)
         console.print(Panel(content, title="Generated Content", expand=False), style="cyan")
 
         # AI Evaluation
-        evaluation = evaluator.evaluate_content(content, prompt)
+        evaluation = evaluator.evaluate_content(content, prompt, evaluator_feedback)
         parsed_eval = parse_evaluation(evaluation)
         display_evaluation(parsed_eval, console)
 
@@ -72,41 +82,47 @@ def run_interaction(prompt, creator, evaluator, feedback_agent):
         memory.add_interaction(prompt, content, evaluation, user_eval)
 
         # Apply feedback to improve agents
-        interpretation = feedback_agent.analyze_interaction({'prompt': prompt, 'content': content}, evaluation, user_eval)
+        interpretation, improvements_needed = feedback_agent.analyze_interaction({'prompt': prompt, 'content': content}, evaluation, user_eval)
         console.print("\n[bold magenta]AI Interpretation:[/bold magenta]")
         console.print(Panel(interpretation, expand=False), style="magenta")
 
-        improvements_needed = "improvements needed" in interpretation.lower()
+        # Ask user if they agree with the AI's assessment
+        user_agrees = Prompt.ask("Do you agree with the AI's assessment?", choices=["yes", "no"], default="yes")
 
-        if improvements_needed:
+        if improvements_needed and user_agrees.lower() == "yes":
             creator_feedback, evaluator_feedback = feedback_agent.generate_improvement_suggestions(interpretation)
             console.print("\n[yellow]Improvements are needed. The content creator and evaluator will now improve their outputs.[/yellow]")
             if creator_feedback:
-                creator.learn(creator_feedback)
                 console.print("\n[bold cyan]Feedback for Content Creator:[/bold cyan]")
-                console.print(Panel(creator_feedback, expand=False), style="cyan")
+                for criterion, suggestions in creator_feedback.items():
+                    console.print(f"\n{criterion}:")
+                    for suggestion in suggestions:
+                        console.print(f"- {suggestion}")
             if evaluator_feedback:
-                evaluator.learn(evaluator_feedback)
                 console.print("\n[bold yellow]Feedback for Evaluator:[/bold yellow]")
-                console.print(Panel(evaluator_feedback, expand=False), style="yellow")
+                for criterion, suggestions in evaluator_feedback.items():
+                    console.print(f"\n{criterion}:")
+                    for suggestion in suggestions:
+                        console.print(f"- {suggestion}")
+            
+            # Apply feedback
+            creator.learn(creator_feedback)
+            evaluator.learn(evaluator_feedback)
+            
             user_choice = Prompt.ask("Do you want to continue with the improved version, start a new prompt, or quit?", choices=["continue", "new", "quit"], default="continue")
             if user_choice == 'continue':
-                previous_content = content
                 continue
             elif user_choice == 'new':
                 return True
             elif user_choice == 'quit':
                 return False
         else:
-            console.print("\n[green]No improvements are needed. The content and evaluation are exceptional.[/green]")
-            user_choice = Prompt.ask("Do you agree? If not, you can provide additional feedback.", choices=["agree", "disagree"], default="agree")
-            if user_choice == "disagree":
-                additional_feedback = Prompt.ask("Please provide your additional feedback")
-                user_eval.feedback += f"\nAdditional feedback: {additional_feedback}"
-                continue
+            if improvements_needed:
+                console.print("\n[yellow]The AI suggested improvements, but you disagreed. No changes will be made.[/yellow]")
             else:
-                user_choice = Prompt.ask("Do you want to start a new prompt or quit?", choices=["new", "quit"], default="new")
-                return user_choice == "new"
+                console.print("\n[green]No improvements are needed. The content and evaluation are exceptional.[/green]")
+            user_choice = Prompt.ask("Do you want to start a new prompt or quit?", choices=["new", "quit"], default="new")
+            return user_choice == "new"
 
 def get_user_evaluation(console):
     user_scores = {}
