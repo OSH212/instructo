@@ -61,23 +61,13 @@ class FeedbackAgent:
         For each criterion, provide at least one specific suggestion for improvement or explicitly state why no improvement is needed.
         """
 
+
     def _parse_feedback(self, feedback):
         sections = feedback.split('[Overall Analysis]')
         overall_analysis = sections[-1].split('[Feedback for Content Creator]')[0].strip() if len(sections) > 1 else feedback.strip()
         
-        #content_creator_feedback = feedback.split('[Feedback for Content Creator]')[-1].split('[Feedback for Evaluator]')[0].strip()
-        #evaluator_feedback = feedback.split('[Feedback for Evaluator]')[-1].split('[Improvements Needed]')[0].strip()
-        
-        #improvements_section = feedback.split('[Improvements Needed]')[-1].strip()
-        #improvements_needed = 'YES' in improvements_section.upper()
-        #improvements_explanation = improvements_section.split('\n', 1)[-1].strip() if '\n' in improvements_section else ''
-
         return {
             'overall_analysis': overall_analysis,
-            #'content_creator_feedback': content_creator_feedback,
-            #'evaluator_feedback': evaluator_feedback,
-            #'improvements_needed': improvements_needed,
-            #'improvements_explanation': improvements_explanation,
         }
     
 

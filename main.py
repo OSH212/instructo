@@ -69,11 +69,11 @@ def run_interaction(prompt, creator, evaluator, feedback_agent):
             )
 
             if decision == "continue":
-                if feedback['improvements_needed']:
+                if "YES" in feedback['overall_analysis'].upper():
                     logger.debug("Improvements needed, applying feedback")
                     # Apply feedback to content creator and evaluator
-                    creator.learn(feedback['content_creator_feedback'], prompt, content)
-                    evaluator.learn(feedback['evaluator_feedback'], prompt, content)
+                    creator.learn(feedback['overall_analysis'], prompt, content)
+                    evaluator.learn(feedback['overall_analysis'], prompt, content)
                     break  # Break the inner loop to start a new iteration with the learned feedback
                 else:
                     logger.debug("No improvements needed")
@@ -97,83 +97,39 @@ def run_interaction(prompt, creator, evaluator, feedback_agent):
 
 
 
+# def display_feedback(feedback, console):
+#     logger.debug("Displaying feedback")
+#     console.print("\n[bold magenta]Feedback Agent Analysis:[/bold magenta]")
+    
+#     full_feedback = ""
+
+#     if 'overall_analysis' in feedback:
+#         full_feedback += f"[bold]Overall Analysis:[/bold]\n{feedback['overall_analysis']}\n\n"
+    
+#     if 'content_creator_feedback' in feedback:
+#         full_feedback += f"[bold]Feedback for Content Creator:[/bold]\n{feedback['content_creator_feedback']}\n\n"
+    
+#     if 'evaluator_feedback' in feedback:
+#         full_feedback += f"[bold]Feedback for Evaluator:[/bold]\n{feedback['evaluator_feedback']}\n\n"
+    
+#     #full_feedback += f"[bold]Improvements needed:[/bold] {'Yes' if feedback.get('improvements_needed', False) else 'No'}\n"
+    
+#     if feedback.get('improvements_explanation'):
+#         full_feedback += f"[bold]Explanation:[/bold]\n{feedback['improvements_explanation']}"
+    
+#     console.print(Panel(full_feedback, title="Feedback Agent Analysis", expand=False))
+#     logger.debug("Finished displaying feedback")
 def display_feedback(feedback, console):
     logger.debug("Displaying feedback")
     console.print("\n[bold magenta]Feedback Agent Analysis:[/bold magenta]")
     
-    full_feedback = ""
-
-    if 'overall_analysis' in feedback:
-        full_feedback += f"[bold]Overall Analysis:[/bold]\n{feedback['overall_analysis']}\n\n"
-    
-    if 'content_creator_feedback' in feedback:
-        full_feedback += f"[bold]Feedback for Content Creator:[/bold]\n{feedback['content_creator_feedback']}\n\n"
-    
-    if 'evaluator_feedback' in feedback:
-        full_feedback += f"[bold]Feedback for Evaluator:[/bold]\n{feedback['evaluator_feedback']}\n\n"
-    
-    #full_feedback += f"[bold]Improvements needed:[/bold] {'Yes' if feedback.get('improvements_needed', False) else 'No'}\n"
-    
-    if feedback.get('improvements_explanation'):
-        full_feedback += f"[bold]Explanation:[/bold]\n{feedback['improvements_explanation']}"
+    full_feedback = feedback['overall_analysis']
     
     console.print(Panel(full_feedback, title="Feedback Agent Analysis", expand=False))
     logger.debug("Finished displaying feedback")
 
-# def display_feedback(feedback, console):
-#     console.print("\n[bold magenta]Feedback Agent Analysis:[/bold magenta]")
-    
-#     full_feedback = ""
-#     if 'overall_analysis' in feedback:
-#         full_feedback += f"[bold]Overall Analysis:[/bold]\n{feedback['overall_analysis']}\n\n"
-    
-#     if 'content_creator_feedback' in feedback:
-#         full_feedback += f"[bold]Feedback for Content Creator:[/bold]\n{feedback['content_creator_feedback']}\n\n"
-    
-#     if 'evaluator_feedback' in feedback:
-#         full_feedback += f"[bold]Feedback for Evaluator:[/bold]\n{feedback['evaluator_feedback']}\n\n"
-    
-#     full_feedback += f"[bold]Improvements needed:[/bold] {'Yes' if feedback.get('improvements_needed', False) else 'No'}\n"
-    
-#     if feedback.get('improvements_explanation'):
-#         full_feedback += f"[bold]Explanation:[/bold]\n{feedback['improvements_explanation']}"
-    
-#     console.print(Panel(full_feedback, title="Feedback Agent Analysis", expand=False))
 
-# def display_feedback(feedback, console):
-#     logger.debug("Starting to display feedback")
-#     logger.debug("Printing feedback agent analysis header")
-#     console.print("\n[bold magenta]Feedback Agent Analysis:[/bold magenta]")
-    
-#     logger.debug("Initializing full_feedback string")
-#     full_feedback = ""
 
-#     logger.debug("Checking for overall_analysis in feedback")
-#     if 'overall_analysis' in feedback:
-#         logger.debug("Adding overall analysis to full_feedback")
-#         full_feedback += f"[bold]Overall Analysis:[/bold]\n{feedback['overall_analysis']}\n\n"
-    
-#     logger.debug("Checking for content_creator_feedback in feedback")
-#     if 'content_creator_feedback' in feedback:
-#         logger.debug("Adding content creator feedback to full_feedback")
-#         full_feedback += f"[bold]Feedback for Content Creator:[/bold]\n{feedback['content_creator_feedback']}\n\n"
-    
-#     logger.debug("Checking for evaluator_feedback in feedback")
-#     if 'evaluator_feedback' in feedback:
-#         logger.debug("Adding evaluator feedback to full_feedback")
-#         full_feedback += f"[bold]Feedback for Evaluator:[/bold]\n{feedback['evaluator_feedback']}\n\n"
-    
-#     logger.debug("Adding improvements needed information to full_feedback")
-#     full_feedback += f"[bold]Improvements needed:[/bold] {'Yes' if feedback.get('improvements_needed', False) else 'No'}\n"
-    
-#     logger.debug("Checking for improvements_explanation in feedback")
-#     if feedback.get('improvements_explanation'):
-#         logger.debug("Adding improvements explanation to full_feedback")
-#         full_feedback += f"[bold]Explanation:[/bold]\n{feedback['improvements_explanation']}"
-    
-#     logger.debug("Printing full feedback in a panel")
-#     console.print(Panel(full_feedback, title="Feedback Agent Analysis", expand=False))
-#     logger.debug("Finished displaying feedback")
 
 def get_additional_feedback(console):
     console.print("\n[bold]Please provide additional feedback for improvement:[/bold]")
