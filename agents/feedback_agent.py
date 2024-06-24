@@ -2,6 +2,10 @@ from utils.api_handler import api
 from config import FEEDBACK_MODEL
 from utils.guidelines import EVALUATION_CRITERIA
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 class FeedbackAgent:
     def __init__(self):
         self.model = FEEDBACK_MODEL
@@ -11,16 +15,20 @@ class FeedbackAgent:
         )
 
     def analyze_interaction(self, content, evaluation, user_eval_content, user_feedback_evaluator):
+        logger.debug("FeedbackAgent: Analyzing interaction")
         feedback_prompt = self._generate_feedback_prompt(content, evaluation, user_eval_content, user_feedback_evaluator)
         messages = [
             {"role": "system", "content": self.system_message},
             {"role": "user", "content": feedback_prompt}
         ]
 
+        logger.debug("FeedbackAgent: Sending request to API")
         response = api.get_completion(self.model, messages)
         if response and 'choices' in response:
             feedback = response['choices'][0]['message']['content'].strip()
+            logger.debug("FeedbackAgent: Parsing feedback")
             return self._parse_feedback(feedback)
+        logger.warning("FeedbackAgent: No valid response from API")
         return None
 
     def _generate_feedback_prompt(self, content, evaluation, user_eval_content, user_feedback_evaluator):
@@ -57,20 +65,21 @@ class FeedbackAgent:
         sections = feedback.split('[Overall Analysis]')
         overall_analysis = sections[-1].split('[Feedback for Content Creator]')[0].strip() if len(sections) > 1 else feedback.strip()
         
-        content_creator_feedback = feedback.split('[Feedback for Content Creator]')[-1].split('[Feedback for Evaluator]')[0].strip()
-        evaluator_feedback = feedback.split('[Feedback for Evaluator]')[-1].split('[Improvements Needed]')[0].strip()
+        #content_creator_feedback = feedback.split('[Feedback for Content Creator]')[-1].split('[Feedback for Evaluator]')[0].strip()
+        #evaluator_feedback = feedback.split('[Feedback for Evaluator]')[-1].split('[Improvements Needed]')[0].strip()
         
-        improvements_section = feedback.split('[Improvements Needed]')[-1].strip()
-        improvements_needed = 'YES' in improvements_section.upper()
-        improvements_explanation = improvements_section.split('\n', 1)[-1].strip() if '\n' in improvements_section else ''
+        #improvements_section = feedback.split('[Improvements Needed]')[-1].strip()
+        #improvements_needed = 'YES' in improvements_section.upper()
+        #improvements_explanation = improvements_section.split('\n', 1)[-1].strip() if '\n' in improvements_section else ''
 
         return {
             'overall_analysis': overall_analysis,
-            'content_creator_feedback': content_creator_feedback,
-            'evaluator_feedback': evaluator_feedback,
-            'improvements_needed': improvements_needed,
-            'improvements_explanation': improvements_explanation,
+            #'content_creator_feedback': content_creator_feedback,
+            #'evaluator_feedback': evaluator_feedback,
+            #'improvements_needed': improvements_needed,
+            #'improvements_explanation': improvements_explanation,
         }
+    
 
     def incorporate_user_feedback(self, previous_feedback, additional_feedback):
         incorporation_prompt = f"""
