@@ -96,29 +96,6 @@ def run_interaction(prompt, creator, evaluator, feedback_agent):
     return True  # Continue the main loop
 
 
-
-# def display_feedback(feedback, console):
-#     logger.debug("Displaying feedback")
-#     console.print("\n[bold magenta]Feedback Agent Analysis:[/bold magenta]")
-    
-#     full_feedback = ""
-
-#     if 'overall_analysis' in feedback:
-#         full_feedback += f"[bold]Overall Analysis:[/bold]\n{feedback['overall_analysis']}\n\n"
-    
-#     if 'content_creator_feedback' in feedback:
-#         full_feedback += f"[bold]Feedback for Content Creator:[/bold]\n{feedback['content_creator_feedback']}\n\n"
-    
-#     if 'evaluator_feedback' in feedback:
-#         full_feedback += f"[bold]Feedback for Evaluator:[/bold]\n{feedback['evaluator_feedback']}\n\n"
-    
-#     #full_feedback += f"[bold]Improvements needed:[/bold] {'Yes' if feedback.get('improvements_needed', False) else 'No'}\n"
-    
-#     if feedback.get('improvements_explanation'):
-#         full_feedback += f"[bold]Explanation:[/bold]\n{feedback['improvements_explanation']}"
-    
-#     console.print(Panel(full_feedback, title="Feedback Agent Analysis", expand=False))
-#     logger.debug("Finished displaying feedback")
 def display_feedback(feedback, console):
     logger.debug("Displaying feedback")
     console.print("\n[bold magenta]Feedback Agent Analysis:[/bold magenta]")

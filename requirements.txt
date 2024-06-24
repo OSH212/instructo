@@ -3,3 +3,5 @@ python-dotenv
 pyyaml
 colorama
 rich
+tqdm
+loguru
