@@ -38,14 +38,12 @@ class Evaluator:
             "Avoid emotional language, maintaining a neutral, professional tone throughout."
         )
         self.feedback = None
+        self.last_prompt = None
+        self.last_content = None
     
 
-    def evaluate_content(self, content, objective):
-        evaluation_prompt = get_evaluation_prompt(content, objective)
-        if self.feedback:
-            evaluation_prompt += "\n\nPlease incorporate the following feedback into your evaluation:\n"
-            evaluation_prompt += self.feedback
-            evaluation_prompt += "\n\nAfter your evaluation, explain how you incorporated the feedback."
+    def evaluate_content(self, content, prompt):
+        evaluation_prompt = self._generate_evaluation_prompt(content, prompt)
         
         messages = [
             {"role": "system", "content": self.system_message},
@@ -54,30 +52,18 @@ class Evaluator:
         response = api.get_completion(self.model, messages)
         if response and 'choices' in response:
             evaluation = response['choices'][0]['message']['content']
-            if self.feedback:
-                evaluation += "\n\nFeedback Incorporation:\n"
-                evaluation += self._explain_feedback_incorporation()
             parsed_evaluation = self._parse_evaluation(evaluation)
             if not parsed_evaluation:  # If parsing fails, return the raw evaluation
                 return {"Raw Evaluation": evaluation}
             return parsed_evaluation
         else:
             return {"Error": "I apologize, but I couldn't evaluate the content at this time. Please try again later."}
-        
-    def _explain_feedback_incorporation(self):
-        return f"I have received and incorporated the following feedback into my evaluation:\n{self.feedback}\n\nHere's how I incorporated this feedback: [Specific explanation of how the feedback was incorporated into the evaluation]"
 
-    def learn(self, feedback):
-        self.feedback = feedback
-        
-    def _explain_feedback_incorporation(self):
-        explanation = "I have received and incorporated the following feedback into my evaluation:\n"
-        for criterion, suggestions in self.feedback.items():
-            explanation += f"\n{criterion}:\n"
-            for suggestion in suggestions:
-                explanation += f"- {suggestion}: [Specific explanation of how this suggestion was incorporated into the evaluation]\n"
-        return explanation
-
+    def _generate_evaluation_prompt(self, content, prompt):
+        evaluation_prompt = get_evaluation_prompt(content, prompt)
+        if self.feedback:
+            evaluation_prompt += f"\n\nPlease incorporate the following feedback into your evaluation:\n{self.feedback}\n\nExplicitly acknowledge the feedback and explain how you've incorporated it into your evaluation."
+        return evaluation_prompt
 
     def _parse_evaluation(self, evaluation):
         parsed = {}
@@ -101,5 +87,7 @@ class Evaluator:
             return {"Raw Evaluation": evaluation}
         return parsed
 
-    def learn(self, feedback):
+    def learn(self, feedback, prompt, content):
         self.feedback = feedback
+        self.last_prompt = prompt
+        self.last_content = content

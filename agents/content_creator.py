@@ -38,7 +38,9 @@ class ContentCreator:
             "Your goal is to produce content of the highest caliber, demonstrating thorough research, linguistic mastery, and unwavering adherence to the given objective."
         )
         self.feedback = None
-
+        
+    
+    
 
     def create_content(self, prompt):
         context = self._generate_context(prompt)
@@ -49,35 +51,19 @@ class ContentCreator:
         ]
         response = api.get_completion(self.model, messages)
         if response and 'choices' in response:
-            content = response['choices'][0]['message']['content']
-            if self.feedback:
-                content += "\n\nFeedback Incorporation:\n"
-                content += self._explain_feedback_incorporation()
-            return content
+            return response['choices'][0]['message']['content']
         else:
             return "I apologize, but I couldn't generate content at this time. Please try again later."
 
     def _generate_context(self, prompt):
         context = f"Prompt: {prompt}\n\n"
         if self.feedback:
-            context += "Please incorporate the following feedback into your content:\n"
-            for criterion, details in self.feedback.items():
-                context += f"\n{criterion}:\n"
-                context += f"Score: {details['score']}\n"
-                context += f"Feedback: {details['feedback']}\n"
-            context += "\n\nGenerate the content based on the prompt and incorporate the feedback. After the main content, explain how you incorporated each piece of feedback."
-        else:
-            context += "Please generate content based on the given prompt."
+            context += f"Please incorporate the following feedback into your content:\n{self.feedback}\n\n"
+        context += "Generate the content based on the prompt. If feedback was provided, explicitly acknowledge it and explain how you've incorporated it into your response."
         return context
 
-    def _explain_feedback_incorporation(self):
-        explanation = "I have received and incorporated the following feedback:\n"
-        for criterion, details in self.feedback.items():
-            explanation += f"\n{criterion}:\n"
-            explanation += f"Score: {details['score']}\n"
-            explanation += f"Feedback: {details['feedback']}\n"
-            explanation += f"Incorporation: [Specific explanation of how this feedback was incorporated]\n"
-        return explanation
-
-    def learn(self, feedback):
+    def learn(self, feedback, prompt, content):
         self.feedback = feedback
+        self.last_prompt = prompt
+        self.last_content = content
+        

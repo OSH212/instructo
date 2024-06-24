@@ -15,30 +15,86 @@ from rich import box
 from utils.guidelines import EVALUATION_CRITERIA
 from agents.feedback_agent import FeedbackAgent
 
-def apply_feedback(creator, evaluator, creator_feedback, evaluator_feedback):
-    if creator_feedback:
-        creator.learn(creator_feedback)
-    if evaluator_feedback:
-        evaluator.learn(evaluator_feedback)
 
 
-def handle_command(command, prompt, creator, evaluator, feedback_agent):
-    if command == 'quit':
-        return False
-    elif command == 'new':
-        return True
-    elif command == 'restart':
-        print("\nRestarting interaction with the same prompt.")
-        run_interaction(prompt, creator, evaluator, feedback_agent)
-    else:
-        print("Invalid command. Please try again.")
-    return True
+# def run_interaction(prompt, creator, evaluator, feedback_agent):
+#     console = Console()
+    
+#     while True:
+#         # Content creation
+#         content = creator.create_content(prompt)
+#         console.print(Panel(content, title="Generated Content", expand=False), style="cyan")
 
-def parse_evaluation(evaluation):
-    if isinstance(evaluation, str):
-        return {'full_evaluation': evaluation}
-    return evaluation
+#         # AI Evaluation
+#         evaluation = evaluator.evaluate_content(content, prompt)
+#         display_evaluation(evaluation, console)
 
+#         # User Evaluation for Content
+#         user_eval_content = get_user_evaluation_for_content(console)
+
+#         # User Feedback for Evaluator
+#         user_feedback_evaluator = get_user_feedback_for_evaluator(console)
+
+#         # Store interaction in memory
+#         memory.add_interaction(prompt, content, evaluation, user_eval_content, user_feedback_evaluator)
+
+#         # Feedback Agent Analysis
+#         feedback = feedback_agent.analyze_interaction(
+#             {'prompt': prompt, 'content': content},
+#             evaluation,
+#             user_eval_content,
+#             user_feedback_evaluator
+#         )
+#         display_feedback(feedback, console)
+
+#         while True:
+#             decision = Prompt.ask(
+#                 "What would you like to do?",
+#                 choices=["continue", "disagree", "new", "quit"],
+#                 default="continue"
+#             )
+
+#             if decision == "continue":
+#                 if feedback['improvements_needed']:
+#                     # Apply feedback to content creator and evaluator
+#                     creator.learn(feedback['content_creator_feedback'], prompt, content)
+#                     evaluator.learn(feedback['evaluator_feedback'], prompt, content)
+                    
+#                     # Generate new content with feedback incorporated
+#                     new_content = creator.create_content(prompt)
+#                     console.print("\n[bold green]Content Creator's response after incorporating feedback:[/bold green]")
+#                     console.print(Panel(new_content, title="Updated Generated Content", expand=False), style="cyan")
+
+#                     # Generate new evaluation with feedback incorporated
+#                     new_evaluation = evaluator.evaluate_content(new_content, prompt)
+#                     console.print("\n[bold green]Evaluator's response after incorporating feedback:[/bold green]")
+#                     display_evaluation(new_evaluation, console)
+
+#                     # Update variables for the next iteration
+#                     content = new_content
+#                     evaluation = new_evaluation
+                    
+#                     # Get new user evaluations
+#                     user_eval_content = get_user_evaluation_for_content(console)
+#                     user_feedback_evaluator = get_user_feedback_for_evaluator(console)
+                    
+#                     # New feedback analysis
+#                     feedback = feedback_agent.analyze_interaction(
+#                         {'prompt': prompt, 'content': content},
+#                         evaluation,
+#                         user_eval_content,
+#                         user_feedback_evaluator
+#                     )
+#                     display_feedback(feedback, console)
+#                 else:
+#                     console.print("No further improvements needed. Starting a new interaction.")
+#                     return True
+#             elif decision == "disagree":
+#                 additional_feedback = get_additional_feedback(console)
+#                 feedback = feedback_agent.incorporate_user_feedback(feedback, additional_feedback)
+#                 display_feedback(feedback, console)
+#             elif decision == "new" or decision == "quit":
+#                 return decision == "new"
 
 def run_interaction(prompt, creator, evaluator, feedback_agent):
     console = Console()
@@ -80,41 +136,9 @@ def run_interaction(prompt, creator, evaluator, feedback_agent):
             if decision == "continue":
                 if feedback['improvements_needed']:
                     # Apply feedback to content creator and evaluator
-                    creator.learn(feedback['content_feedback'])
-                    evaluator.learn(feedback['evaluator_feedback'])
-                    
-                    # Generate new content with feedback incorporated
-                    new_content = creator.create_content(prompt)
-                    console.print("\n[bold green]Content Creator's response after incorporating feedback:[/bold green]")
-                    console.print(Panel(new_content, title="Updated Generated Content", expand=False), style="cyan")
-                    
-                    # Generate new evaluation with feedback incorporated
-                    new_evaluation = evaluator.evaluate_content(new_content, prompt)
-                    console.print("\n[bold green]Evaluator's response after incorporating feedback:[/bold green]")
-                    display_evaluation(new_evaluation, console)
-                    
-                    # Get user evaluation for the new content and evaluation
-                    new_user_eval_content = get_user_evaluation_for_content(console)
-                    new_user_feedback_evaluator = get_user_feedback_for_evaluator(console)
-                    
-                    # Store new interaction in memory
-                    memory.add_interaction(prompt, new_content, new_evaluation, new_user_eval_content, new_user_feedback_evaluator)
-                    
-                    # Feedback Agent Analysis for the new iteration
-                    new_feedback = feedback_agent.analyze_interaction(
-                        {'prompt': prompt, 'content': new_content},
-                        new_evaluation,
-                        new_user_eval_content,
-                        new_user_feedback_evaluator
-                    )
-                    display_feedback(new_feedback, console)
-                    
-                    # Update variables for the next iteration
-                    content = new_content
-                    evaluation = new_evaluation
-                    user_eval_content = new_user_eval_content
-                    user_feedback_evaluator = new_user_feedback_evaluator
-                    feedback = new_feedback
+                    creator.learn(feedback['content_creator_feedback'], prompt, content)
+                    evaluator.learn(feedback['evaluator_feedback'], prompt, content)
+                    break  # Break the inner loop to start a new iteration
                 else:
                     console.print("No further improvements needed. Starting a new interaction.")
                     return True
@@ -122,39 +146,31 @@ def run_interaction(prompt, creator, evaluator, feedback_agent):
                 additional_feedback = get_additional_feedback(console)
                 feedback = feedback_agent.incorporate_user_feedback(feedback, additional_feedback)
                 display_feedback(feedback, console)
-            elif decision == "new":
-                return True
-            elif decision == "quit":
-                return False
+            elif decision == "new" or decision == "quit":
+                return decision == "new"
+
+    return True  # Continue the main loop
 
 
 def display_feedback(feedback, console):
     console.print("\n[bold magenta]Feedback Agent Analysis:[/bold magenta]")
     
+    full_feedback = ""
     if 'overall_analysis' in feedback:
-        console.print(Panel(feedback['overall_analysis'], title="Overall Analysis", expand=False))
-
-    # if 'content_feedback' in feedback:
-    #     console.print("\n[bold cyan]Feedback for Content Creator:[/bold cyan]")
-    #     for criterion, suggestions in feedback['content_feedback'].items():
-    #         console.print(f"\n[underline]{criterion}:[/underline]")
-    #         for suggestion in suggestions:
-    #             console.print(f"- {suggestion}")
+        full_feedback += f"[bold]Overall Analysis:[/bold]\n{feedback['overall_analysis']}\n\n"
     
-    # if 'evaluator_feedback' in feedback:
-    #     console.print("\n[bold yellow]Feedback for Evaluator:[/bold yellow]")
-    #     for criterion, suggestions in feedback['evaluator_feedback'].items():
-    #         console.print(f"\n[underline]{criterion}:[/underline]")
-    #         for suggestion in suggestions:
-    #             console.print(f"- {suggestion}")
-
-    # if 'conclusion' in feedback:
-    #     console.print("\n[bold green]Conclusion:[/bold green]")
-    #     console.print(Panel(feedback['conclusion'], expand=False))
-
-    # console.print(f"\n[bold]Improvements needed:[/bold] {'Yes' if feedback.get('improvements_needed', False) else 'No'}")
-    # if 'improvements_explanation' in feedback:
-    #     console.print(Panel(feedback['improvements_explanation'], title="Explanation", expand=False))
+    if 'content_creator_feedback' in feedback:
+        full_feedback += f"[bold]Feedback for Content Creator:[/bold]\n{feedback['content_creator_feedback']}\n\n"
+    
+    if 'evaluator_feedback' in feedback:
+        full_feedback += f"[bold]Feedback for Evaluator:[/bold]\n{feedback['evaluator_feedback']}\n\n"
+    
+    full_feedback += f"[bold]Improvements needed:[/bold] {'Yes' if feedback.get('improvements_needed', False) else 'No'}\n"
+    
+    if feedback.get('improvements_explanation'):
+        full_feedback += f"[bold]Explanation:[/bold]\n{feedback['improvements_explanation']}"
+    
+    console.print(Panel(full_feedback, title="Feedback Agent Analysis", expand=False))
 
 def get_additional_feedback(console):
     console.print("\n[bold]Please provide additional feedback for improvement:[/bold]")
