@@ -1,6 +1,11 @@
 from utils.api_handler import api
 from utils.memory import memory
 from config import CONTENT_CREATOR_MODEL
+from utils.guidelines import EVALUATION_CRITERIA
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ContentCreator:
     def __init__(self):
@@ -38,13 +43,10 @@ class ContentCreator:
             "Your goal is to produce content of the highest caliber, demonstrating thorough research, linguistic mastery, and unwavering adherence to the given objective."
         )
         self.feedback = None
-        
-    
-    
 
+        
     def create_content(self, prompt):
         context = self._generate_context(prompt)
-        
         messages = [
             {"role": "system", "content": self.system_message},
             {"role": "user", "content": context}
@@ -55,15 +57,46 @@ class ContentCreator:
         else:
             return "I apologize, but I couldn't generate content at this time. Please try again later."
 
-    def _generate_context(self, prompt):
-        context = f"Prompt: {prompt}\n\n"
-        if self.feedback:
-            context += f"Please incorporate the following feedback into your content:\n{self.feedback}\n\n"
-        context += "Generate the content based on the prompt. If feedback was provided, explicitly acknowledge it and explain how you've incorporated it into your response."
-        return context
 
-    def learn(self, feedback, prompt, content):
-        self.feedback = feedback
-        self.last_prompt = prompt
-        self.last_content = content
+    def _generate_context(self, prompt):
+        memory_context = memory.get_content_creator_context(EVALUATION_CRITERIA)
+        logger.debug(f"Memory context: {memory_context}")
+
+        context = f"Prompt: {prompt}\n\n"
+        context += f"Evaluation Criteria: {', '.join(EVALUATION_CRITERIA.keys())}\n\n"
         
+        last_content = memory_context.get('last_content', '')
+        logger.debug(f"last content: {last_content}, memory content: {memory_context}, memory:{memory}")
+        if last_content:
+            context += f"Last Generated Content: {last_content[:200]}...\n\n"
+        
+        highest_scoring_content = memory_context.get('highest_scoring_content', '')
+        if highest_scoring_content and highest_scoring_content != last_content:
+            context += f"Highest Scoring Content: {highest_scoring_content[:200]}...\n\n"
+        
+        last_feedback = memory_context.get('last_feedback', {})
+        if last_feedback:
+            context += "Last Feedback:\n"
+            context += f"Overall Analysis: {last_feedback.get('overall_analysis', '')[:200]}...\n"
+            context += "Specific Feedback for Content Creator:\n"
+            for criterion, feedback in last_feedback.get('content_creator_feedback', {}).items():
+                context += f"- {criterion}: {feedback[:100]}...\n"
+            context += "\n"
+        
+        if last_feedback:
+            context += ("Generate the content based on the prompt. Explicitly acknowledge the previous feedback "
+                        "and explain how you've incorporated it into your response. Your response should follow this structure:\n"
+                        "1. Acknowledgment of previous feedback\n"
+                        "2. Explanation of how you've incorporated the feedback\n"
+                        "3. New content incorporating the feedback\n"
+                        "Focus on improving based on the evaluation criteria and previous feedback.")
+        else:
+            context += ("Generate the content based on the prompt. Your response should follow this structure:\n"
+                        "1. New content addressing the prompt\n"
+                        "Focus on addressing the evaluation criteria.")
+        if user_evaluation_content := memory_context.get("user_evaluation_content", None):
+            context += "User feedback for the content creator (IMPORTANT):\n"
+            context += str(user_evaluation_content)
+
+        logger.debug(f"Generated context: {context}")
+        return context

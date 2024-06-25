@@ -1,6 +1,11 @@
+from utils.memory import memory
 from utils.api_handler import api
 from utils.guidelines import EVALUATION_CRITERIA, get_evaluation_prompt
 from config import EVALUATOR_MODEL
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Evaluator:
     def __init__(self):
@@ -44,7 +49,6 @@ class Evaluator:
 
     def evaluate_content(self, content, prompt):
         evaluation_prompt = self._generate_evaluation_prompt(content, prompt)
-        
         messages = [
             {"role": "system", "content": self.system_message},
             {"role": "user", "content": evaluation_prompt}
@@ -59,12 +63,49 @@ class Evaluator:
         else:
             return {"Error": "I apologize, but I couldn't evaluate the content at this time. Please try again later."}
 
-    def _generate_evaluation_prompt(self, content, prompt):
-        evaluation_prompt = get_evaluation_prompt(content, prompt)
-        if self.feedback:
-            evaluation_prompt += f"\n\nPlease incorporate the following feedback into your evaluation:\n{self.feedback}\n\nExplicitly acknowledge the feedback and explain how you've incorporated it into your evaluation."
-        return evaluation_prompt
 
+    def _generate_evaluation_prompt(self, content, prompt):
+        memory_context = memory.get_evaluator_context(EVALUATION_CRITERIA)
+        #memory_context = memory.get_evaluator_context(EVALUATION_CRITERIA)
+
+        evaluation_prompt = get_evaluation_prompt(content, prompt)
+        evaluation_prompt += f"\n\nEvaluation Criteria: {', '.join(EVALUATION_CRITERIA.keys())}\n\n"
+        
+        last_evaluation = memory_context.get('last_evaluation', '')
+        if last_evaluation:
+            evaluation_prompt += f"Last Evaluation: {str(last_evaluation)[:200]}...\n\n"
+        
+        last_content = memory_context.get('last_content', '')
+        if last_content:
+            evaluation_prompt += f"Last Generated Content: {last_content[:200]}...\n\n"
+        
+        highest_scoring_content = memory_context.get('highest_scoring_content', '')
+        if highest_scoring_content and highest_scoring_content != last_content:
+            evaluation_prompt += f"Highest Scoring Content: {highest_scoring_content[:200]}...\n\n"
+        
+        last_feedback = memory_context.get('last_feedback', {})
+        if last_feedback:
+            evaluation_prompt += "Last Feedback for Evaluator:\n"
+            evaluation_prompt += f"Overall Analysis: {last_feedback.get('overall_analysis', '')[:200]}...\n"
+            evaluation_prompt += "Specific Feedback for Evaluator:\n"
+            evaluation_prompt +=  str(last_feedback.get('evaluator_feedback', ""))
+        if user_feedback_evaluator := memory_context.get("user_feedback_evaluator", None):
+            evaluation_prompt += "User feedback for the evaluator (IMPORTANT):\n"
+            evaluation_prompt += str(user_feedback_evaluator)
+
+            #for criterion, feedback in last_feedback.get('evaluator_feedback', {}).items():
+                #evaluation_prompt += f"- {criterion}: {feedback[:100]}...\n"
+            evaluation_prompt += "\n"
+        
+        evaluation_prompt += ("Please evaluate the content based on the given criteria. Your evaluation should follow this structure:\n"
+                            "1. Acknowledgment of previous feedback\n"
+                            "2. Explanation of how you've incorporated the feedback into your evaluation process\n"
+                            "3. Detailed evaluation of the content, addressing each criterion\n"
+                            "Focus on providing constructive and actionable feedback, and explain any changes in your evaluation approach based on previous feedback.")
+        
+        logger.debug(f"evaluation_prompt: {evaluation_prompt}")
+        return evaluation_prompt
+    
     def _parse_evaluation(self, evaluation):
         parsed = {}
         current_criterion = None
@@ -86,8 +127,3 @@ class Evaluator:
         if not parsed:  # If no criteria were parsed, return the raw evaluation
             return {"Raw Evaluation": evaluation}
         return parsed
-
-    def learn(self, feedback, prompt, content):
-        self.feedback = feedback
-        self.last_prompt = prompt
-        self.last_content = content
