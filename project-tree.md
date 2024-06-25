@@ -4,7 +4,8 @@ perplexity_llm_teacher/
 ├── agents/
 │   ├── __init__.py
 │   ├── content_creator.py
-│   └── evaluator.py
+│   ├── evaluator.py
+│   └── feedback_agent.py
 ├── models/
 │   ├── __init__.py
 │   └── evaluation.py
@@ -15,6 +16,6 @@ perplexity_llm_teacher/
 │   └── memory.py
 ├── config.py
 ├── requirements.txt
-├── .env
-├── memory.yaml
-└── README.md
+├── README.md
+├── .gitignore
+└── project-tree.md
