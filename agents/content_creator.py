@@ -29,7 +29,6 @@ class ContentCreator:
             "   - Implement a logical structure: clear introduction, well-developed body, and conclusive ending\n"
             "   - Use smooth transitions for seamless idea flow\n"
             "   - Conclude with a summary and, when applicable, a call to action or future outlook\n"
-            "5. Content Enhancement:\n"
             "   - Incorporate relevant examples, data, sources and/or case studies to substantiate points\n"
             "   - Address potential counterarguments or limitations when appropriate\n"
             "   - Balance different perspectives to maintain objectivity\n\n"
@@ -60,13 +59,13 @@ class ContentCreator:
 
     def _generate_context(self, prompt):
         memory_context = memory.get_content_creator_context(EVALUATION_CRITERIA)
-        logger.debug(f"Memory context: {memory_context}")
+        #logger.debug(f"Memory context: {memory_context}")
 
         context = f"Prompt: {prompt}\n\n"
         context += f"Evaluation Criteria: {', '.join(EVALUATION_CRITERIA.keys())}\n\n"
         
         last_content = memory_context.get('last_content', '')
-        logger.debug(f"last content: {last_content}, memory content: {memory_context}, memory:{memory}")
+        #logger.debug(f"last content: {last_content}, memory content: {memory_context}, memory:{memory}")
         if last_content:
             context += f"Last Generated Content: {last_content[:200]}...\n\n"
         
@@ -98,5 +97,5 @@ class ContentCreator:
             context += "User feedback for the content creator (IMPORTANT):\n"
             context += str(user_evaluation_content)
 
-        logger.debug(f"Generated context: {context}")
+        #logger.debug(f"Generated context: {context}")
         return context

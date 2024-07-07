@@ -1,4 +1,4 @@
-from colorama import Fore, Style, init
+# from colorama import Fore, Style, init
 from rich.console import Console
 from rich.panel import Panel
 from rich.columns import Columns
@@ -11,8 +11,8 @@ from models.evaluation import UserEvaluation
 from utils.memory import memory
 from utils.guidelines import EVALUATION_CRITERIA
 from agents.feedback_agent import FeedbackAgent
-from utils.api_handler import api
-from config import FEEDBACK_MODEL
+# from utils.api_handler import api
+# from config import FEEDBACK_MODEL
 import traceback
 
 
@@ -29,44 +29,44 @@ def run_interaction(prompt, creator, evaluator, feedback_agent):
     iteration_count = 0
     
     while True:
-        logger.debug(f"Starting iteration {iteration_count}")
-        logger.debug(f"Using memory with {len(memory.get_recent_iterations(5))} recent iterations")
-        logger.debug(f"Starting iteration {memory.get_iteration_count()}")
-        logger.debug(f"Using memory with {len(memory.get_recent_iterations(5))} recent iterations")
+        # logger.debug(f"Starting iteration {iteration_count}")
+        # logger.debug(f"Using memory with {len(memory.get_recent_iterations(5))} recent iterations")
+        # logger.debug(f"Starting iteration {memory.get_iteration_count()}")
+        # logger.debug(f"Using memory with {len(memory.get_recent_iterations(5))} recent iterations")
         
         # Content creation
-        logger.debug("Creating content")
+        #logger.debug("Creating content")
         content = creator.create_content(prompt)
         console.print(Panel(content, title="Generated Content", expand=False), style="cyan")
 
         # AI Evaluation
-        logger.debug("Evaluating content")
+        #logger.debug("Evaluating content")
         evaluation = evaluator.evaluate_content(content, prompt)
         display_evaluation(evaluation, console)
 
         # User Evaluation for Content
-        logger.debug("Getting user evaluation for content")
+        #logger.debug("Getting user evaluation for content")
         user_eval_content = get_user_evaluation_for_content(console)
 
         # User Feedback for Evaluator
-        logger.debug("Getting user feedback for evaluator")
+        #logger.debug("Getting user feedback for evaluator")
         user_feedback_evaluator = get_user_feedback_for_evaluator(console)
 
         # Feedback Agent Analysis
-        logger.debug("Generating and displaying feedback")
+        #logger.debug("Generating and displaying feedback")
         recent_iterations = memory.get_recent_iterations(5)  # Get the recent iterations
-        logger.debug(f"recent iterations: {recent_iterations}")
+        #logger.debug(f"recent iterations: {recent_iterations}")
         feedback = feedback_agent.analyze_interaction(recent_iterations, prompt, content, evaluation, user_eval_content, user_feedback_evaluator)
         display_feedback(feedback, console)
-        logger.debug(f"Feedback before storing in memory: {feedback}")
+        #logger.debug(f"Feedback before storing in memory: {feedback}")
 
 
         # Store iteration in memory
-        logger.debug("Storing iteration in memory")
+        #logger.debug("Storing iteration in memory")
         memory.add_iteration(prompt, content, evaluation, user_eval_content, user_feedback_evaluator, feedback)
 
         while True:
-            logger.debug("Asking for user decision")
+            #logger.debug("Asking for user decision")
             decision = Prompt.ask(
                 "What would you like to do?",
                 choices=["continue", "disagree", "new", "quit"],
@@ -76,31 +76,31 @@ def run_interaction(prompt, creator, evaluator, feedback_agent):
             if decision == "continue":
                 improvements_needed = feedback['improvements_needed'].strip().upper().startswith('YES')
                 if improvements_needed:
-                    logger.debug("Improvements needed, starting next iteration")
+                    #logger.debug("Improvements needed, starting next iteration")
                     iteration_count += 1
                     break  # Break the inner loop to start a new iteration
                 else:
-                    logger.debug("No improvements needed")
+                    #logger.debug("No improvements needed")
                     console.print("No further improvements needed. Starting a new interaction.")
                     return True
             elif decision == "disagree":
-                logger.debug("User disagreed, incorporating additional feedback")
+                #logger.debug("User disagreed, incorporating additional feedback")
                 additional_feedback = get_additional_feedback(console)
                 feedback = feedback_agent.incorporate_user_feedback(feedback, additional_feedback)
                 display_feedback(feedback, console)
             elif decision == "new":
-                logger.debug("Starting new interaction")
+                #logger.debug("Starting new interaction")
                 memory.start_new_session()
                 return True
             elif decision == "quit":
-                logger.debug("Quitting")
+                #logger.debug("Quitting")
                 return False
 
     return True  # Continue the main loop
 
 
 def display_feedback(feedback, console):
-    logger.debug("Displaying feedback")
+    #logger.debug("Displaying feedback")
     console.print("\n[bold magenta]Feedback Agent Analysis:[/bold magenta]")
     
     if feedback:
@@ -122,7 +122,7 @@ def display_feedback(feedback, console):
     else:
         console.print("Error: No feedback available")
     
-    logger.debug("Finished displaying feedback")
+    #logger.debug("Finished displaying feedback")
 
 
 

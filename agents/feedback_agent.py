@@ -17,39 +17,39 @@ class FeedbackAgent:
 
     
     def analyze_interaction(self, recent_iterations, prompt, content, evaluation, user_eval_content, user_feedback_evaluator):
-        logger.debug("FeedbackAgent: Analyzing interaction")
-        logger.debug(f"Iteration(s): {recent_iterations}")
-        logger.debug(f"Prompt: {prompt[:100]}...")
-        logger.debug(f"Content: {content[:100]}...")
-        logger.debug(f"Evaluation: {evaluation}")
-        logger.debug(f"User Eval Content: {user_eval_content}")
-        logger.debug(f"User Feedback Evaluator: {user_feedback_evaluator}")
+        # logger.debug("FeedbackAgent: Analyzing interaction")
+        # logger.debug(f"Iteration(s): {recent_iterations}")
+        # logger.debug(f"Prompt: {prompt[:100]}...")
+        # logger.debug(f"Content: {content[:100]}...")
+        # logger.debug(f"Evaluation: {evaluation}")
+        # logger.debug(f"User Eval Content: {user_eval_content}")
+        # logger.debug(f"User Feedback Evaluator: {user_feedback_evaluator}")
     
         #feedback_prompt = self._generate_feedback_prompt(prompt, content, evaluation, user_eval_content, user_feedback_evaluator)
         feedback_prompt = self._generate_feedback_prompt(recent_iterations, prompt, content, evaluation, user_eval_content, user_feedback_evaluator)
-        logger.debug(f"Generated feedback prompt: {feedback_prompt[:200]}...")
+        #logger.debug(f"Generated feedback prompt: {feedback_prompt[:200]}...")
 
         messages = [
             {"role": "system", "content": self.system_message},
             {"role": "user", "content": feedback_prompt}
         ]
 
-        logger.debug("FeedbackAgent: Sending request to API")
+        #logger.debug("FeedbackAgent: Sending request to API")
         response = api.get_completion(self.model, messages)
-        logger.debug(f"API Response: {response}")
+        #logger.debug(f"API Response: {response}")
         if response and 'choices' in response:
             feedback = response['choices'][0]['message']['content'].strip()
-            logger.debug("FeedbackAgent: Parsing feedback")
-            logger.debug(f"Raw feedback: {feedback[:200]}...")
+            #logger.debug("FeedbackAgent: Parsing feedback")
+            #logger.debug(f"Raw feedback: {feedback[:200]}...")
             return self._parse_feedback(feedback)
-        logger.warning("FeedbackAgent: No valid response from API")
+        #logger.warning("FeedbackAgent: No valid response from API")
         return None
 
     def _generate_feedback_prompt(self, recent_iterations, prompt, content, evaluation, user_eval_content, user_feedback_evaluator):
         context = "\n".join([f"Iteration {i}: {iter['content'][:100]}..." for i, iter in enumerate(recent_iterations)])
-        logger.debug(f"Recent iterations retrieved: {len(recent_iterations)}")
+        #logger.debug(f"Recent iterations retrieved: {len(recent_iterations)}")
         #context = "\n".join([f"Iteration {i+1}: {iter.get('content', '')[:100]}..." for i, iter in enumerate(recent_iterations)])
-        logger.debug(f"Context: {context}")
+        #logger.debug(f"Context: {context}")
         
         return f"""
         Analyze the following interaction:
@@ -86,7 +86,7 @@ class FeedbackAgent:
         """
 
     def _parse_feedback(self, feedback):
-        logger.debug(f"Parsing feedback: {feedback[:200]}...")
+        #logger.debug(f"Parsing feedback: {feedback[:200]}...")
         sections = feedback.split('###')
         parsed_feedback = {
             'overall_analysis': '',
@@ -118,7 +118,7 @@ class FeedbackAgent:
                     if 'improvements needed' in header:
                         parsed_feedback['improvements_needed'] = content
 
-        logger.debug(f"Parsed feedback: {parsed_feedback}")
+        #logger.debug(f"Parsed feedback: {parsed_feedback}")
         return parsed_feedback
 
     def incorporate_user_feedback(self, previous_feedback, additional_feedback):

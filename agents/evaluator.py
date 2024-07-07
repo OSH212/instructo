@@ -66,7 +66,7 @@ class Evaluator:
 
     def _generate_evaluation_prompt(self, content, prompt):
         memory_context = memory.get_evaluator_context(EVALUATION_CRITERIA)
-        #memory_context = memory.get_evaluator_context(EVALUATION_CRITERIA)
+        #####memory_context = memory.get_evaluator_context(EVALUATION_CRITERIA)
 
         evaluation_prompt = get_evaluation_prompt(content, prompt)
         evaluation_prompt += f"\n\nEvaluation Criteria: {', '.join(EVALUATION_CRITERIA.keys())}\n\n"
@@ -103,7 +103,7 @@ class Evaluator:
                             "3. Detailed evaluation of the content, addressing each criterion\n"
                             "Focus on providing constructive and actionable feedback, and explain any changes in your evaluation approach based on previous feedback.")
         
-        logger.debug(f"evaluation_prompt: {evaluation_prompt}")
+        #logger.debug(f"evaluation_prompt: {evaluation_prompt}")
         return evaluation_prompt
     
     def _parse_evaluation(self, evaluation):
