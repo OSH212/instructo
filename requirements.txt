@@ -5,3 +5,5 @@ colorama
 rich
 tqdm
 loguru
+flask
+flask-socketio

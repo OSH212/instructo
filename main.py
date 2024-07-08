@@ -115,7 +115,7 @@ def display_feedback(feedback, console):
         # if feedback['evaluator_feedback']:
         #     console.print(Panel(feedback['evaluator_feedback'], title="Feedback for Evaluator", expand=False))
         if feedback['everything']:
-            console.print(f"\n[bold]Improvements Needed:[/bold] {feedback['everything']}")
+            console.print(f"\n[bold]Feedback:[/bold] {feedback['everything']}")
         
         if feedback['improvements_needed']:
             console.print(f"\n[bold]Improvements Needed:[/bold] {feedback['improvements_needed']}")

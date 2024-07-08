@@ -70,7 +70,7 @@ class FeedbackAgent:
         (Provide a brief overall analysis of the interaction, including major discrepancies between AI and user evaluations)
 
         ### [Feedback for Content Creator]
-        (For each criterion, provide specific, actionable feedback for the content creator. If no improvement is needed, explicitly state why.)
+        (For each criterion - and based on the ai and user evaluations, provide /10 rating as well as specific, actionable feedback for the content creator. If no improvement is needed, explicitly state why.)
 
         ### [Feedback for Evaluator]
         (Provide specific, actionable feedback for the evaluator based on the user's feedback and your analysis. If no improvement is needed, explicitly state why.)
@@ -93,7 +93,7 @@ class FeedbackAgent:
             'content_creator_feedback': {},
             'evaluator_feedback': '',
             'improvements_needed': '',
-            'everything': feedback,
+            'everything': '',
         }
         
         for section in sections:
@@ -117,6 +117,8 @@ class FeedbackAgent:
                     #     parsed_feedback['evaluator_feedback'] = content
                     if 'improvements needed' in header:
                         parsed_feedback['improvements_needed'] = content
+                    else:
+                        parsed_feedback['everything'] += f"### {header.capitalize()}\n{content}\n\n"
 
         #logger.debug(f"Parsed feedback: {parsed_feedback}")
         return parsed_feedback

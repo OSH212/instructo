@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Content Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>AI Content Generator</h1>
+        <textarea id="prompt-input" placeholder="Enter your prompt here"></textarea>
+        <button id="generate-btn">Generate</button>
+        
+        <div class="quadrant-container">
+            <div class="quadrant" id="content-section">
+                <h2>Generated Content</h2>
+            </div>
+            <div class="quadrant" id="evaluation-section">
+                <h2>AI Evaluation</h2>
+            </div>
+            <div class="quadrant" id="user-evaluation-section">
+                <h2>User Evaluation</h2>
+                <div id="user-evaluation-form"></div>
+                <button id="submit-feedback-btn" style="display: none;">Submit Feedback</button>
+            </div>
+            <div class="quadrant" id="feedback-section">
+                <h2>AI Feedback</h2>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

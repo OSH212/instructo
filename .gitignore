@@ -7,6 +7,9 @@
 !README.md
 !project-tree.md
 !requirements.txt
+!web/static/js/main.js
+!web/static/css/styles.css
+!web/templates/index.html
 
 # explicitly allow dirs to be searched for above exceptions
 !*/
@@ -17,3 +20,8 @@ __pycache__/
 
 # Ignore .DS_Store 
 .DS_Store
+
+#
+
+#
+venv/
