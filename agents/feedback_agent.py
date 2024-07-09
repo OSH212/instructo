@@ -65,20 +65,20 @@ class FeedbackAgent:
         User Feedback for Evaluator: {user_feedback_evaluator}
 
         Provide a comprehensive analysis and actionable feedback in the following structure in markdown: 
-
-        ### [Overall Analysis]
+        \n
+        ### [###Overall Analysis###]
         (Provide a brief overall analysis of the interaction, including major discrepancies between AI and user evaluations)
-
-        ### [Feedback for Content Creator]
-        (For each criterion - and based on the ai and user evaluations, provide /10 rating as well as specific, actionable feedback for the content creator. If no improvement is needed, explicitly state why.)
-
-        ### [Feedback for Evaluator]
+        \n
+        ### [###Feedback for Content Creator###]
+        (Under the 'Feedback for Content Creator section': For each criterion - and based on the ai and user evaluations, provide /10 rating as well as specific, actionable feedback for the content creator. If no improvement is needed, explicitly state why.)
+        \n
+        ### [###Feedback for Evaluator###]
         (Provide specific, actionable feedback for the evaluator based on the user's feedback and your analysis. If no improvement is needed, explicitly state why.)
-
-        ### [Improvements Needed]
+        \n
+        ### [###Improvements Needed###]
         (Explicitly state 'YES' if improvements are needed, or 'NO' if no improvements are necessary. Provide a brief explanation for your decision.)
         Note: Consider improvements necessary until the content rating is 10/10 across all criteria and both the user and evaluator are in full agreement. However, use your judgment to assess the overall quality and progress.
-
+        \n
         Ensure you address all of the following criteria in the Content Creator section:
         {', '.join(EVALUATION_CRITERIA.keys())} and include details on how you used the context of recent iterations in your assessment and feedback.
 
@@ -89,9 +89,9 @@ class FeedbackAgent:
         #logger.debug(f"Parsing feedback: {feedback[:200]}...")
         sections = feedback.split('###')
         parsed_feedback = {
-            'overall_analysis': '',
-            'content_creator_feedback': {},
-            'evaluator_feedback': '',
+            #'overall_analysis': '',
+            #'content_creator_feedback': {},
+            #'evaluator_feedback': '',
             'improvements_needed': '',
             'everything': '',
         }
@@ -119,6 +119,9 @@ class FeedbackAgent:
                         parsed_feedback['improvements_needed'] = content
                     else:
                         parsed_feedback['everything'] += f"### {header.capitalize()}\n{content}\n\n"
+                        
+        # Removng "Improvements Needed" section from 'everything'
+        parsed_feedback['everything'] = parsed_feedback['everything'].replace(f"### Improvements Needed\n{parsed_feedback['improvements_needed']}\n\n", "")
 
         #logger.debug(f"Parsed feedback: {parsed_feedback}")
         return parsed_feedback
@@ -134,17 +137,18 @@ class FeedbackAgent:
         Please incorporate the additional user feedback into your previous analysis and feedback. Update your recommendations for both the content creator and evaluator based on this new information.
 
         Provide your updated feedback in the following structure:
-        [Overall Analysis]
+        \n
+        ### [###Overall Analysis###]
         (Updated overall analysis incorporating the new feedback)
-
-        [Feedback for Content Creator]
-        (For each criterion, provide updated specific, actionable feedback for the content creator, explicitly mentioning how the additional user feedback has been incorporated)
-
-        [Feedback for Evaluator]
+        \n
+        ### [###Feedback for Content Creator###]
+        (Under the 'Feedback for Content Creator section': For each criterion, provide updated specific, actionable feedback for the content creator, explicitly mentioning how the additional user feedback has been incorporated)
+        \n
+        ### [###Feedback for Evaluator###]
         (Provide updated specific, actionable feedback for the evaluator, explicitly mentioning how the additional user feedback has been incorporated)
-
-        [Improvements Needed]
-        (State 'YES' or 'NO', and provide a brief explanation for your decision, considering the additional feedback)
+        \n
+        ### [###Improvements Needed###]
+        (State 'YES' or 'NO', and provide a brief explanation for your decision, considering the additional feedback)\n
         """
 
         messages = [

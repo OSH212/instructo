@@ -70,8 +70,5 @@ Provide feedback on the AI's performance
 Choose to continue, disagree, start a new interaction, or quit
 
 
-License
-This project is not published for public use -yet. It is a private project to demonstrate skills and interest joining Perplexity AI.
-
 Acknowledgments
 Perplexity AI for inspiring  this project

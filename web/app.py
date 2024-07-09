@@ -6,6 +6,7 @@ from flask import Flask, render_template, request, jsonify
 from main import run_interaction, ContentCreator, Evaluator, FeedbackAgent, memory
 from utils.guidelines import EVALUATION_CRITERIA
 from models.evaluation import UserEvaluation
+import re
 
 app = Flask(__name__)
 
@@ -22,8 +23,19 @@ def generate():
     prompt = request.json['prompt']
     content = creator.create_content(prompt)
     evaluation = evaluator.evaluate_content(content, prompt)
+    
+    print("Evaluation", evaluation)
+    
+    # Extract acknowledgment if present
+    acknowledgment = ""
+    acknowledgment_match = re.search(r"Acknowledgment of Previous Feedback:([\s\S]*?)(?=\n\n|$)", content, re.IGNORECASE)
+    if acknowledgment_match:
+        acknowledgment = acknowledgment_match.group(1).strip()
+        content = content.replace(acknowledgment_match.group(0), "").strip()
+    
     return jsonify({
         'content': content,
+        'acknowledgment': acknowledgment,
         'evaluation': evaluation,
         'criteria': list(EVALUATION_CRITERIA.keys())
     })

@@ -10,23 +10,63 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentEvaluation = null;
     let currentFeedback = null;
 
+    // function formatAIResponse(response) {
+    //     if (typeof response === 'string') {
+    //         return response.replace(/###\s*(.*)/g, '<h3>$1</h3>')
+    //                        .replace(/\n/g, '<br>');
+    //     } else if (typeof response === 'object') {
+    //         let formattedResponse = '';
+    //         // if (response.overall_score !== undefined) {
+    //         //     formattedResponse += `<h3>Overall Score: ${response.overall_score}</h3>`;
+    //         // }
+    //         // if (response.criteria_scores) {
+    //         //     formattedResponse += '<h3>Criteria Scores:</h3>';
+    //         //     for (const [criterion, score] of Object.entries(response.criteria_scores)) {
+    //         //         formattedResponse += `<p><strong>${criterion}:</strong> ${score}</p>`;
+    //         //     }
+    //         // }
+
+    //         if (response.evaluation) {
+    //             formattedResponse += '<h3>EVALXX:<h3>';
+    //             formattedResponse += formatAIResponse(response.evaluation)
+    //         }
+
+    //         // if (response.feedback) {
+    //         //     formattedResponse += '<h3>Feedback:</h3>';
+    //         //     formattedResponse += formatAIResponse(response.feedback);
+    //         // }
+    //         if (response.everything) {
+    //             formattedResponse += formatAIResponse(response.everything);
+    //         }
+    //         if (response.improvements_needed) {
+    //             formattedResponse += `<h3>Improvements Needed:</h3>${response.improvements_needed.replace(/\n/g, '<br>')}`;
+    //         }
+    //         return formattedResponse;
+    //     }
+    //     return JSON.stringify(response, null, 2);
+    // }
     function formatAIResponse(response) {
         if (typeof response === 'string') {
             return response.replace(/###\s*(.*)/g, '<h3>$1</h3>')
                            .replace(/\n/g, '<br>');
         } else if (typeof response === 'object') {
             let formattedResponse = '';
-            for (const [key, value] of Object.entries(response)) {
-                formattedResponse += `<h3>${key}</h3>`;
-                if (typeof value === 'string') {
-                    formattedResponse += value.replace(/###\s*(.*)/g, '<h4>$1</h4>')
-                                             .replace(/\n/g, '<br>');
-                } else if (typeof value === 'object' && value !== null) {
-                    formattedResponse += formatAIResponse(value);
-                } else {
-                    formattedResponse += JSON.stringify(value, null, 2)
-                                             .replace(/\n/g, '<br>')
-                                             .replace(/ /g, '&nbsp;');
+            if (response.Raw_Evaluation || response['Raw Evaluation']) {
+                const rawEval = response.Raw_Evaluation || response['Raw Evaluation'];
+                formattedResponse += formatAIResponse(rawEval);
+            } else {
+                for (const [key, value] of Object.entries(response)) {
+                    formattedResponse += `<h3>${key}</h3>`;
+                    if (typeof value === 'string') {
+                        formattedResponse += value.replace(/###\s*(.*)/g, '<h4>$1</h4>')
+                                                 .replace(/\n/g, '<br>');
+                    } else if (typeof value === 'object' && value !== null) {
+                        formattedResponse += formatAIResponse(value);
+                    } else {
+                        formattedResponse += JSON.stringify(value, null, 2)
+                                                 .replace(/\n/g, '<br>')
+                                                 .replace(/ /g, '&nbsp;');
+                    }
                 }
             }
             return formattedResponse;
@@ -35,12 +75,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function formatContent(content) {
-        const acknowledgmentRegex = /Acknowledgment of previous feedback:([\s\S]*?)(?=\n\n|$)/;
+        const acknowledgmentRegex = /Acknowledgment of Previous Feedback:([\s\S]*?)(?=\n\n|$)/i;
         const match = content.match(acknowledgmentRegex);
         
         let formattedContent = '';
         if (match) {
-            formattedContent += `<div class="acknowledgment"><h3>Acknowledgment of previous feedback:</h3>${match[1].trim()}</div>`;
+            formattedContent += `<div class="acknowledgment"><h3>Acknowledgment of Previous Feedback:</h3>${match[1].trim().replace(/\n/g, '<br>')}</div>`;
             content = content.replace(match[0], '');
         }
         
@@ -117,8 +157,22 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then(response => response.json())
         .then(data => {
-            generatedContent.innerHTML = `<h2>Generated Content</h2><div class="generated-content">${formatContent(data.content)}</div>`;
-            evaluationResults.innerHTML = `<h2>AI Evaluation</h2><div class="ai-response">${formatAIResponse(data.evaluation)}</div>`;
+            console.log("Received data", data);
+            let contentHtml = '';
+            if (data.acknowledgment) {
+                contentHtml += `<div class="acknowledgment"><h3>Acknowledgment of Previous Feedback:</h3>${data.acknowledgment.replace(/\n/g, '<br>')}</div>`;
+            }
+            contentHtml += `<div class="generated-content">${formatContent(data.content)}</div>`;
+            generatedContent.innerHTML = `<h2>Generated Content</h2>${contentHtml}`;
+
+            // evaluationResults.innerHTML = `<h2>AI Evaluation</h2><div class="ai-response">${formatAIResponse(data.evaluation)}</div>`;
+            // Ensure the evaluation is displayed
+            if (data.evaluation) {
+                evaluationResults.innerHTML = `<h2>AI Evaluation</h2><div class="ai-response">${formatAIResponse(data.evaluation)}</div>`;
+            } else {
+                evaluationResults.innerHTML = '<h2>AI Evaluation</h2><p>No evaluation available.</p>';
+            }
+        
             createUserEvaluationForm(data.criteria);
             currentEvaluation = data.evaluation;
             submitFeedbackBtn.style.display = 'block';
@@ -126,6 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .catch(error => {
             console.error('Error:', error);
             generatedContent.innerHTML = '<h2>Generated Content</h2><pre>An error occurred while generating content.</pre>';
+            evaluationResults.innerHTML = '<h2>AI Evaluation</h2><pre>An error occurred while generating evaluation.</pre>';
         });
     });
 
@@ -194,3 +249,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.handleAction = handleAction;
 });
+
+
+
+
+
+
+    // function formatAIResponse(response) {
+    //     if (typeof response === 'string') {
+    //         return response.replace(/###\s*(.*)/g, '<h3>$1</h3>')
+    //                        .replace(/\n/g, '<br>');
+    //     } else if (typeof response === 'object') {
+    //         let formattedResponse = '';
+    //         if (response.everything) {
+    //             formattedResponse += formatAIResponse(response.everything);
+    //         }
+    //         if (response.improvements_needed) {
+    //             formattedResponse += `<h3>Improvements Needed:</h3>${response.improvements_needed.replace(/\n/g, '<br>')}`;
+    //         }
+    //         return formattedResponse;
+    //     }
+    //     return JSON.stringify(response, null, 2);
+    // }
