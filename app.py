@@ -32,7 +32,7 @@ creator = ContentCreator()
 evaluator = Evaluator()
 feedback_agent = FeedbackAgent()
 
-# Custom CSS for retro-futuristic theme
+# CSS
 st.markdown("""
 <style>
     .main {
@@ -67,7 +67,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Streamlit app
-st.title("Instructo")
+st.title("Instructo", anchor="center")
 
 # Sidebar
 st.sidebar.header(f"Current Iteration: {st.session_state.iteration_count}")
@@ -96,7 +96,10 @@ with col1:
     with st.container():
         st.markdown('<div class="section-container">', unsafe_allow_html=True)
         st.subheader("Generated Content")
-        st.text_area("Content:", value=st.session_state.content, height=200, disabled=True)
+        if st.session_state.content:
+            st.text_area("Content:", value=st.session_state.content, height=200, disabled=True)
+        else:
+            st.write("No content generated yet.")
         st.markdown('</div>', unsafe_allow_html=True)
 
     # User Evaluation Section
@@ -104,16 +107,24 @@ with col1:
         st.markdown('<div class="section-container">', unsafe_allow_html=True)
         st.subheader("User Evaluation")
         if st.session_state.stage == "user_eval":
-            user_scores = {}
-            user_feedbacks = {}
-            for criterion in EVALUATION_CRITERIA:
-                user_scores[criterion] = st.slider(f"Rate the {criterion} (0-10):", 0, 10, 5)
-                user_feedbacks[criterion] = st.text_area(f"Feedback for {criterion}:", height=50)
+            with st.expander("Provide User Evaluation"):
+                user_scores = {}
+                user_feedbacks = {}
+                for criterion in EVALUATION_CRITERIA:
+                    user_scores[criterion] = st.slider(f"Rate the {criterion} (0-10):", 0, 10, 5)
+                    user_feedbacks[criterion] = st.text_area(f"Feedback for {criterion}:", height=50)
 
-            if st.button("Submit User Evaluation"):
-                st.session_state.user_eval_content = UserEvaluation(user_scores, user_feedbacks)
-                st.session_state.stage = "generate_feedback"
-                st.experimental_rerun()
+                if st.button("Submit User Evaluation"):
+                    st.session_state.user_eval_content = UserEvaluation(user_scores, user_feedbacks)
+                    st.session_state.stage = "generate_feedback"
+                    st.experimental_rerun()
+        elif st.session_state.user_eval_content:
+            with st.expander("View User Evaluation"):
+                for criterion, score in st.session_state.user_eval_content.score.items():
+                    st.write(f"{criterion}: {score}/10")
+                    st.write(f"Feedback: {st.session_state.user_eval_content.feedback[criterion]}")
+        else:
+            st.write("No user evaluation provided yet.")
         st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
@@ -172,6 +183,11 @@ with col2:
                     if improvements_needed:
                         st.session_state.iteration_count += 1
                         st.session_state.stage = "generate"
+                        # Clear content, evaluation, and feedback for the new iteration
+                        st.session_state.content = None
+                        st.session_state.evaluation = None
+                        st.session_state.user_eval_content = None
+                        st.session_state.feedback = None
                         st.experimental_rerun()
                     else:
                         st.write("No further improvements needed. You can start a new interaction.")
@@ -185,7 +201,7 @@ with col2:
                     st.session_state.iteration_count = 0
                     st.session_state.stage = "input"
                 elif decision == "Quit":
-                    st.write("Thank you for using Instructo: AI Content Creation and Evaluation System!")
+                    st.write("Thank you for using the AI Content Creation and Evaluation System!")
                     memory.save_to_file()
                     st.stop()
                 st.experimental_rerun()

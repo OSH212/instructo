@@ -7,9 +7,9 @@
 !README.md
 !project-tree.md
 !requirements.txt
-!web/static/script.js
-!web/static/styles.css
-!web/templates/index.html
+# !web/static/script.js
+# !web/static/styles.css
+# !web/templates/index.html
 
 # explicitly allow dirs to be searched for above exceptions
 !*/

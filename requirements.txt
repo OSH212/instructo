@@ -7,3 +7,7 @@ tqdm
 loguru
 flask
 flask-socketio
+streamlit
+cohere
+litellm
+sqlite3

@@ -1,26 +1,20 @@
 perplexity_llm_teacher/
 │
 ├── main.py
+├── app.py
 ├── agents/
-│ ├── init.py
+│ ├── __init__.py
 │ ├── content_creator.py
 │ ├── evaluator.py
 │ └── feedback_agent.py
 ├── models/
-│ ├── init.py
+│ ├── __init__.py
 │ └── evaluation.py
 ├── utils/
-│ ├── init.py
+│ ├── __init__.py
 │ ├── api_handler.py
 │ ├── guidelines.py
 │ └── memory.py
-├── web/
-│ ├── app.py
-│ ├── templates/
-│ │ └── index.html
-│ └── static/
-│ ├── styles.css
-│ └── script.js
 ├── config.py
 ├── requirements.txt
 ├── README.md
