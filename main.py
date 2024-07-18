@@ -35,7 +35,10 @@ def run_interaction(prompt, creator, evaluator, feedback_agent):
         # logger.debug(f"Using memory with {len(memory.get_recent_iterations(5))} recent iterations")
         
         # Content creation
-        #logger.debug("Creating content")
+        console.print("Fetching relevant iterations from memory...")
+        relevant_iterations = memory.get_relevant_iterations(prompt)
+        console.print(f"Found {len(relevant_iterations)} relevant iterations.")
+        console.print("Creating content...")
         content = creator.create_content(prompt)
         console.print(Panel(content, title="Generated Content", expand=False), style="cyan")
 

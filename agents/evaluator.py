@@ -66,11 +66,19 @@ class Evaluator:
 
     def _generate_evaluation_prompt(self, content, prompt):
         memory_context = memory.get_evaluator_context(EVALUATION_CRITERIA)
-        #####memory_context = memory.get_evaluator_context(EVALUATION_CRITERIA)
+        relevant_iterations = memory.get_relevant_iterations(prompt)
 
         evaluation_prompt = get_evaluation_prompt(content, prompt)
         evaluation_prompt += f"\n\nEvaluation Criteria: {', '.join(EVALUATION_CRITERIA.keys())}\n\n"
-        
+
+        if relevant_iterations:
+            evaluation_prompt += "Relevant Previous Iterations:\n"
+            for iteration in relevant_iterations:
+                evaluation_prompt += f"Content: {iteration['content'][:200]}...\n"
+                evaluation_prompt += f"AI Evaluation: {str(iteration['ai_evaluation'])[:200]}...\n"
+                evaluation_prompt += f"User Evaluation: {str(iteration['user_evaluation_content'])[:200]}...\n"
+                evaluation_prompt += f"Relevance Score: {iteration['relevance_score']}\n\n"
+
         last_evaluation = memory_context.get('last_evaluation', '')
         if last_evaluation:
             evaluation_prompt += f"Last Evaluation: {str(last_evaluation)[:200]}...\n\n"
@@ -88,22 +96,17 @@ class Evaluator:
             evaluation_prompt += "Last Feedback for Evaluator:\n"
             evaluation_prompt += f"Overall Analysis: {last_feedback.get('overall_analysis', '')[:200]}...\n"
             evaluation_prompt += "Specific Feedback for Evaluator:\n"
-            evaluation_prompt +=  str(last_feedback.get('evaluator_feedback', ""))
+            evaluation_prompt += str(last_feedback.get('evaluator_feedback', ""))
         if user_feedback_evaluator := memory_context.get("user_feedback_evaluator", None):
             evaluation_prompt += "User feedback for the evaluator (IMPORTANT):\n"
             evaluation_prompt += str(user_feedback_evaluator)
 
-            #for criterion, feedback in last_feedback.get('evaluator_feedback', {}).items():
-                #evaluation_prompt += f"- {criterion}: {feedback[:100]}...\n"
-            evaluation_prompt += "\n"
-        
-        evaluation_prompt += ("Please evaluate the content based on the given criteria. Your evaluation should follow this structure:\n"
-                            "1. Acknowledgment of previous feedback\n"
-                            "2. Explanation of how you've incorporated the feedback into your evaluation process\n"
-                            "3. Detailed evaluation of the content, addressing each criterion\n"
-                            "Focus on providing constructive and actionable feedback, and explain any changes in your evaluation approach based on previous feedback.")
-        
-        #logger.debug(f"evaluation_prompt: {evaluation_prompt}")
+        evaluation_prompt += ("\nPlease evaluate the content based on the given criteria. Your evaluation should follow this structure:\n"
+                              "1. Acknowledgment of previous feedback and relevant iterations\n"
+                              "2. Explanation of how you've incorporated the feedback and relevant information into your evaluation process\n"
+                              "3. Detailed evaluation of the content, addressing each criterion\n"
+                              "Focus on providing constructive and actionable feedback, and explain any changes in your evaluation approach based on previous feedback and relevant iterations.")
+
         return evaluation_prompt
     
     def _parse_evaluation(self, evaluation):

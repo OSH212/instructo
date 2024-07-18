@@ -59,13 +59,20 @@ class ContentCreator:
 
     def _generate_context(self, prompt):
         memory_context = memory.get_content_creator_context(EVALUATION_CRITERIA)
-        #logger.debug(f"Memory context: {memory_context}")
+        relevant_iterations = memory.get_relevant_iterations(prompt)
 
         context = f"Prompt: {prompt}\n\n"
         context += f"Evaluation Criteria: {', '.join(EVALUATION_CRITERIA.keys())}\n\n"
         
+        if relevant_iterations:
+            context += "Relevant Previous Iterations:\n"
+            for iteration in relevant_iterations:
+                context += f"Content: {iteration['content'][:200]}...\n"
+                context += f"AI Evaluation: {str(iteration['ai_evaluation'])[:200]}...\n"
+                context += f"User Evaluation: {str(iteration['user_evaluation_content'])[:200]}...\n"
+                context += f"Relevance Score: {iteration['relevance_score']}\n\n"
+
         last_content = memory_context.get('last_content', '')
-        #logger.debug(f"last content: {last_content}, memory content: {memory_context}, memory:{memory}")
         if last_content:
             context += f"Last Generated Content: {last_content[:200]}...\n\n"
         
@@ -97,5 +104,4 @@ class ContentCreator:
             context += "User feedback for the content creator (IMPORTANT):\n"
             context += str(user_evaluation_content)
 
-        #logger.debug(f"Generated context: {context}")
         return context
