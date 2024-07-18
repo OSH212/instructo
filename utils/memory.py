@@ -84,7 +84,7 @@ class Memory:
             iteration['prompt'],
             iteration['content'],
             json.dumps(iteration['ai_evaluation']),
-            json.dumps(iteration['user_evaluation_content']),
+            json.dumps(iteration['user_evaluation_content'].__dict__ if isinstance(iteration['user_evaluation_content'], UserEvaluation) else iteration['user_evaluation_content']),
             iteration['user_feedback_evaluator'],
             json.dumps(iteration['feedback_agent_analysis']),
             iteration['metadata']['total_score'],
