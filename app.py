@@ -67,7 +67,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Streamlit app
-st.title("AI Content Creation and Evaluation System")
+st.title("Instructo")
 
 # Sidebar
 st.sidebar.header(f"Current Iteration: {st.session_state.iteration_count}")
@@ -185,7 +185,7 @@ with col2:
                     st.session_state.iteration_count = 0
                     st.session_state.stage = "input"
                 elif decision == "Quit":
-                    st.write("Thank you for using the AI Content Creation and Evaluation System!")
+                    st.write("Thank you for using Instructo: AI Content Creation and Evaluation System!")
                     memory.save_to_file()
                     st.stop()
                 st.experimental_rerun()
