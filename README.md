@@ -1,5 +1,8 @@
 Instructo: LLM Teacher Project
 
+## If you'd like to use Instructo, please star and fork the repo! 
+I'd appreciate any feedback!
+
 Overview
 
 Instructo is an AI-powered content creation and evaluation system that leverages Perplexity's API for generating high-quality content and providing comprehensive feedback. It demonstrates the potential of AI in content creation, evaluation, and self-improvement processes. Perplexity models were preferered for their access to up-to-date information.  
@@ -40,6 +43,7 @@ An ode to the 'LLM teacher' positions.
 
 3. Open the provided URL in your browser and use the intuitive interface to interact with the system.
 
+Don't forget to create a .env file with the necessary API keys: PERPLEXITY_API_KEY (or any other model of your choice -> LiteLLM) as well as COHERE_API_KEY.
 
 ### How It Works
 
