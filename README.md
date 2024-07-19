@@ -1,6 +1,6 @@
-Instructo: LLM Teacher Project
+##         Instructo: LLM Teacher Project
 
-## If you'd like to use Instructo, please star and fork the repo! 
+If you'd like to use Instructo, please star and fork the repo! 
 I'd appreciate any feedback!
 
 Overview
