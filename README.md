@@ -59,4 +59,4 @@ Don't forget to create a .env file with the necessary API keys: PERPLEXITY_API_K
 
 ## Configuration
 
-API keys and model specifications are stored in `config.py`. Make sure to set up your environment variables or modify this file with your API keys before running the system.
+API keys and model specifications are stored in `config.py`. Make sure to set up your environment variables with your API keys before running the system.
